@@ -1,0 +1,27 @@
+{
+  "name": "hex4code",
+  "version": "1.1.0",
+  "description": "Hex4Code — AI-powered coding assistant with multi-model routing, semantic cache, and pipeline orchestration",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://atomgit.com/zzwgbdt/Hex4Code"
+  },
+  "author": "Zhengzhou Weiguang Semiconductor Co., Ltd.",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "vscode"
+  ],
+  "scripts": {
+    "build:core": "cd packages/core && npm run build",
+    "build:vscode": "cd vscode && npm run bundle",
+    "build:cli": "cd packages/cli && npm run build",
+    "build": "npm run build:core && npm run build:vscode && npm run build:cli",
+    "test": "npm run test:core && npm run test:vscode && npm run test:cli",
+    "test:core": "cd packages/core && npm test",
+    "test:vscode": "cd vscode && npm test",
+    "test:cli": "cd packages/cli && npm test",
+    "typecheck": "cd packages/core && npx tsc --noEmit && cd ../../vscode && npx tsc --noEmit && cd ../packages/cli && npx tsc --noEmit"
+  }
+}

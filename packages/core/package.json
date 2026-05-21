@@ -1,0 +1,25 @@
+{
+  "name": "@hex4code/core",
+  "version": "1.1.0",
+  "description": "Hex4Code Core — shared session, prompt, tools, models, cache, and orchestration",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://atomgit.com/zzwgbdt/Hex4Code"
+  },
+  "author": "Zhengzhou Weiguang Semiconductor Co., Ltd.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "echo '⚠ No test files yet — see CONTRIBUTING.md for how to add tests'",
+    "typecheck": "npx tsc --noEmit"
+  },
+  "dependencies": {
+    "ejs": "^5.0.2",
+    "openai": "^6.38.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/minimatch": "^5.1.2"
+  }
+}

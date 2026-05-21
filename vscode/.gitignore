@@ -1,0 +1,8 @@
+node_modules/
+out/
+.vscode/
+.DS_Store
+*.vsix
+.idea
+deploy.ps1
+rfc
