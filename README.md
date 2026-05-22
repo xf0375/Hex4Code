@@ -168,7 +168,7 @@ npm run build:vscode
 
 # 打包为 .vsix
 cd vscode
-npx vsce package
+npx vsce package --baseImagesUrl=https://atomgit.com/zzwgbdt/Hex4Code
 # 输出: vscode/hex4code-vscode-<version>.vsix
 ```
 
