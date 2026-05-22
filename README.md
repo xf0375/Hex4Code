@@ -240,28 +240,15 @@ Hex4Code 支持三层配置级联（优先级从低到高）：
 
 ```json
 {
-  "model": "deepseek-chat",
-  "provider": "deepseek",
-  "apiKey": "your-api-key-here",
-  "baseURL": "https://api.deepseek.com",
-  "maxTokens": 4096,
-  "temperature": 0.7,
-  "modelRouting": {
-    "enabled": true,
-    "strategies": {
-      "completion": { "model": "deepseek-chat", "provider": "deepseek" },
-      "generation": { "model": "deepseek-reasoner", "provider": "deepseek" },
-      "analysis": { "model": "gpt-4o", "provider": "openai" },
-      "review": { "model": "deepseek-chat", "provider": "deepseek" },
-      "chat": { "model": "deepseek-chat", "provider": "deepseek" }
-    }
-  },
-  "agentMode": "hex4",
-  "cache": {
-    "enabled": true,
-    "ttl": 3600
-  }
+"env":{
+ "MODEL":"deepseek-v4-pro",
+ "BASE_URL":"https://api.deepseek.com",
+ "API_KEY":"sk-......."
+},
+"thinkingEnabled":true,
+"reasoningEffort":"max"
 }
+
 ```
 
 ### 关键配置项
