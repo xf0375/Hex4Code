@@ -173,7 +173,7 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
-    "test:coverage": "echo '⚠ No test files yet — run `npm test` first to add tests'"
+    "test:coverage": "echo '⚠ No test files yet — run `npm test` first to add tests'",
     "vscode:prepublish": "npm run compile",
     "prepare": "husky"
   },
