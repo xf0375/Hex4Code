@@ -848,11 +848,666 @@ export function App({
 
       // ── /compact — Manual Context Compaction ────────────────────────────
       if (submission.command === "compact") {
-        // Send compaction instruction to active session (auto-compact via built-in threshold)
+        const activeId = sessionManager.getActiveSessionId();
+        if (!activeId) {
+          process.stdout.write(chalk.yellow("No active session to compact.\n"));
+          return;
+        }
+        const session = sessionManager.getSession(activeId);
+        if (!session) {
+          process.stdout.write(chalk.yellow("Session not found.\n"));
+          return;
+        }
+        const msgs = sessionManager.listSessionMessages(activeId);
+        const nonCompacted = msgs.filter(
+          (m) => !m.compacted && m.role !== "system",
+        );
+        if (nonCompacted.length < 4) {
+          process.stdout.write(
+            chalk.yellow(
+              `Not enough messages to compact (need 4+, have ${nonCompacted.length}).\n`,
+            ),
+          );
+          return;
+        }
         process.stdout.write(
-          chalk.green(
-            "Compaction is handled automatically when context exceeds threshold.\n",
-          ),
+          chalk.cyan("Compacting session context...\n"),
+        );
+        try {
+          await sessionManager.compactSession(activeId);
+          const updated = sessionManager.getSession(activeId);
+          const after = updated?.activeTokens ?? 0;
+          process.stdout.write(chalk.green("Compaction complete.\n"));
+          process.stdout.write(
+            chalk.dim(
+              `  Tokens: ${session.activeTokens.toLocaleString()} → ${after.toLocaleString()}\n`,
+            ),
+          );
+          process.stdout.write(
+            chalk.dim(`  Messages compacted: ${nonCompacted.length}\n`),
+          );
+        } catch (err: unknown) {
+          process.stdout.write(
+            chalk.red(
+              `Compaction failed: ${err instanceof Error ? err.message : String(err)}\n`,
+            ),
+          );
+        }
+        process.stdout.write("\n");
+        return;
+      }
+
+      // ── /config — Show Current Configuration ─────────────────────────╼
+      if (submission.command === "config") {
+        const resolved = resolveCurrentSettings(projectRoot);
+        const configured = detectConfiguredProviders(process.env);
+        let modelDef: any = null;
+        try {
+          const m = await import(
+            "@hex4/core/models/provider-registry"
+          );
+          modelDef = m.getModelDef(resolved.model);
+        } catch {
+          /* ignore */
+        }
+
+        process.stdout.write(chalk.bold.cyan("\nCurrent Configuration\n"));
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n"),
+        );
+
+        process.stdout.write(chalk.bold("Model:\n"));
+        process.stdout.write(
+          `  ID:           ${chalk.green(resolved.model)}\n`,
+        );
+        if (modelDef) {
+          process.stdout.write(`  Label:        ${modelDef.label}\n`);
+          process.stdout.write(
+            `  Provider:     ${modelDef.provider}\n`,
+          );
+          process.stdout.write(
+            `  Ctx Window:   ${Math.round(modelDef.contextWindow / 1000)}K tokens\n`,
+          );
+          process.stdout.write(
+            `  Cost (in/out):$${modelDef.costPer1MInput}/$${modelDef.costPer1MOutput} per 1M\n`,
+          );
+        }
+
+        process.stdout.write(chalk.bold("\nReasoning:\n"));
+        process.stdout.write(
+          `  Thinking:     ${resolved.thinkingEnabled ? chalk.green("enabled") : chalk.dim("disabled")}\n`,
+        );
+        process.stdout.write(
+          `  Effort:       ${resolved.reasoningEffort}\n`,
+        );
+
+        process.stdout.write(chalk.bold("\nAPI:\n"));
+        process.stdout.write(
+          `  Base URL:     ${resolved.baseURL}\n`,
+        );
+        const keySuffix = resolved.apiKey
+          ? "****" + resolved.apiKey.slice(-4)
+          : "NOT SET";
+        process.stdout.write(
+          `  API Key:      ${resolved.apiKey ? chalk.green(keySuffix) : chalk.red(keySuffix)}\n`,
+        );
+
+        process.stdout.write(chalk.bold("\nConfigured Providers:\n"));
+        if (configured.length === 0) {
+          process.stdout.write(chalk.yellow("  (none)\n"));
+        } else {
+          for (const pid of configured)
+            process.stdout.write(`  ${chalk.green("●")} ${pid}\n`);
+        }
+
+        process.stdout.write(chalk.bold("\nMCP Servers:\n"));
+        if (
+          resolved.mcpServers &&
+          Object.keys(resolved.mcpServers).length > 0
+        ) {
+          for (const [name, srv] of Object.entries(
+            resolved.mcpServers,
+          )) {
+            process.stdout.write(
+              `  ${chalk.cyan(name)}: ${srv.command} ${(srv.args ?? []).join(" ")}\n`,
+            );
+          }
+        } else process.stdout.write(chalk.dim("  (none)\n"));
+
+        process.stdout.write(chalk.bold("\nConfig Sources:\n"));
+        const userPath = path.join(
+          os.homedir(),
+          ".hex4code",
+          "settings.json",
+        );
+        const projectPath = path.join(
+          projectRoot,
+          ".hex4code",
+          "settings.json",
+        );
+        process.stdout.write(
+          `  User:    ${fs.existsSync(userPath) ? chalk.green(userPath) : chalk.dim(userPath + " (not found)")}\n`,
+        );
+        process.stdout.write(
+          `  Project: ${fs.existsSync(projectPath) ? chalk.green(projectPath) : chalk.dim(projectPath + " (not found)")}\n`,
+        );
+        process.stdout.write(`  Env:     HEX4CODE_* variables\n`);
+
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n\n"),
+        );
+        return;
+      }
+
+      // ── /context — Show Context Window Usage ─────────────────────────╼
+      if (submission.command === "context") {
+        const activeId = sessionManager.getActiveSessionId();
+        const resolved = resolveCurrentSettings(projectRoot);
+        let ctxWindow = 128000;
+        let compactThreshold = 128 * 1024;
+        try {
+          const mr = await import(
+            "@hex4/core/models/model-router"
+          );
+          const st = await import("@hex4/core/session-types");
+          ctxWindow = mr.getContextWindow(resolved.model);
+          compactThreshold = st.getCompactPromptTokenThreshold(
+            resolved.model,
+          );
+        } catch {
+          /* use defaults */
+        }
+
+        process.stdout.write(chalk.bold.cyan("\nContext Usage\n"));
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n"),
+        );
+        process.stdout.write(
+          `  Model:          ${chalk.green(resolved.model)}\n`,
+        );
+        process.stdout.write(
+          `  Ctx Window:     ${(ctxWindow / 1000).toFixed(0)}K tokens\n`,
+        );
+        process.stdout.write(
+          `  Compact Thd:    ${(compactThreshold / 1000).toFixed(0)}K tokens\n\n`,
+        );
+
+        if (!activeId) {
+          process.stdout.write(
+            chalk.dim("  No active session.\n"),
+          );
+        } else {
+          const session = sessionManager.getSession(activeId);
+          if (session) {
+            const ratio = session.activeTokens / ctxWindow;
+            const barW = 30;
+            const filled = Math.round(Math.min(ratio, 1) * barW);
+            const bar =
+              "█".repeat(filled) + "░".repeat(barW - filled);
+            const barColor =
+              ratio > 0.95
+                ? chalk.red
+                : ratio > 0.8
+                  ? chalk.yellow
+                  : chalk.green;
+            const status =
+              ratio > 0.95
+                ? chalk.red("CRITICAL")
+                : ratio > 0.8
+                  ? chalk.yellow("WARNING")
+                  : chalk.green("OK");
+
+            process.stdout.write(
+              `  Active Tokens:  ${session.activeTokens.toLocaleString()} / ${ctxWindow.toLocaleString()}\n`,
+            );
+            process.stdout.write(
+              `  Usage:          ${barColor(bar)} ${(ratio * 100).toFixed(1)}%\n`,
+            );
+            process.stdout.write(`  Status:         ${status}\n`);
+
+            const msgs =
+              sessionManager.listSessionMessages(activeId);
+            const compacted = msgs.filter((m) => m.compacted).length;
+            const active = msgs.filter((m) => !m.compacted).length;
+            process.stdout.write(
+              `  Messages:       ${active} active, ${compacted} compacted\n`,
+            );
+            process.stdout.write(
+              `  Total Cost:     $${session.totalCost.toFixed(6)}\n`,
+            );
+
+            const remaining =
+              compactThreshold - session.activeTokens;
+            if (remaining > 0) {
+              process.stdout.write(
+                chalk.dim(
+                  `  Until compact:  ${(remaining / 1000).toFixed(0)}K tokens remaining\n`,
+                ),
+              );
+            } else {
+              process.stdout.write(
+                chalk.yellow(
+                  "  Above compact threshold — auto-compact will trigger.\n",
+                ),
+              );
+            }
+          } else {
+            process.stdout.write(
+              chalk.yellow("  Session data unavailable.\n"),
+            );
+          }
+        }
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n\n"),
+        );
+        return;
+      }
+
+      // ── /doctor — Run Diagnostic Checks ──────────────────────────────╼
+      if (submission.command === "doctor") {
+        const resolved = resolveCurrentSettings(projectRoot);
+        let checks = 0;
+        let passes = 0;
+
+        process.stdout.write(
+          chalk.bold.cyan("\nDiagnostic Report\n"),
+        );
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n"),
+        );
+
+        // 1. Node version
+        checks++;
+        const nodeVer = process.version;
+        const nodeOk = parseInt(nodeVer.slice(1)) >= 18;
+        process.stdout.write(nodeOk ? chalk.green("●") : chalk.red("○"));
+        process.stdout.write(
+          ` Node.js ${nodeVer} ${nodeOk ? chalk.green("OK") : chalk.red("needs >=18")}\n`,
+        );
+        if (nodeOk) passes++;
+
+        // 2. API key
+        checks++;
+        if (resolved.apiKey) {
+          process.stdout.write(
+            chalk.green("●") + chalk.green(" API Key configured\n"),
+          );
+          passes++;
+        } else {
+          process.stdout.write(
+            chalk.red("○") + chalk.red(" API Key NOT set\n"),
+          );
+        }
+
+        // 3. Provider connection tests
+        const configured = detectConfiguredProviders(process.env);
+        if (configured.length > 0) {
+          process.stdout.write(
+            chalk.dim("  Testing providers...\n"),
+          );
+          for (const pid of configured) {
+            checks++;
+            try {
+              const { testProviderConnection } = await import(
+                "@hex4/core/models/model-router"
+              );
+              const { getProvider } = await import(
+                "@hex4/core/models/provider-registry"
+              );
+              const p = getProvider(pid);
+              if (!p) {
+                process.stdout.write(
+                  `  ${chalk.red("○")} ${pid}: unknown\n`,
+                );
+                continue;
+              }
+              const testModel =
+                p.models.find((m: any) =>
+                  m.capabilities.includes("chat"),
+                ) || p.models[0];
+              const key =
+                process.env[p.apiKeyEnv] || resolved.apiKey || "";
+              if (!key) {
+                process.stdout.write(
+                  `  ${chalk.yellow("○")} ${pid}: no key\n`,
+                );
+                continue;
+              }
+              const result = await testProviderConnection(
+                testModel.id,
+                key,
+                p.defaultBaseURL,
+              );
+              if (result.ok) {
+                process.stdout.write(
+                  `  ${chalk.green("●")} ${pid}: OK (${result.latencyMs}ms)\n`,
+                );
+                passes++;
+              } else {
+                process.stdout.write(
+                  `  ${chalk.red("○")} ${pid}: ${result.error.slice(0, 60)}\n`,
+                );
+              }
+            } catch {
+              process.stdout.write(
+                `  ${chalk.red("○")} ${pid}: test failed\n`,
+              );
+            }
+          }
+        } else {
+          process.stdout.write(
+            chalk.yellow("○ No providers configured\n"),
+          );
+          checks++;
+        }
+
+        // 4. MCP servers
+        checks++;
+        if (
+          resolved.mcpServers &&
+          Object.keys(resolved.mcpServers).length > 0
+        ) {
+          const statuses = sessionManager.getMcpStatus();
+          const ready = statuses.filter(
+            (s) => s.status === "ready",
+          ).length;
+          process.stdout.write(
+            `${ready === statuses.length ? chalk.green("●") : chalk.yellow("●")} MCP: ${ready}/${statuses.length} ready\n`,
+          );
+          if (ready === statuses.length) passes++;
+        } else {
+          process.stdout.write(
+            chalk.dim("●") + chalk.dim(" MCP: not configured\n"),
+          );
+          passes++;
+        }
+
+        // 5. Project config
+        checks++;
+        const projCfgPath = path.join(
+          projectRoot,
+          ".hex4code",
+          "settings.json",
+        );
+        process.stdout.write(
+          fs.existsSync(projCfgPath)
+            ? chalk.green("●") +
+                chalk.green(" Project config: .hex4code/settings.json\n")
+            : chalk.dim("●") +
+                chalk.dim(" Project config: none\n"),
+        );
+        passes++;
+
+        // Summary
+        const pct = Math.round((passes / checks) * 100);
+        const sumColor =
+          pct === 100
+            ? chalk.green
+            : pct >= 70
+              ? chalk.yellow
+              : chalk.red;
+        process.stdout.write(
+          chalk.dim("─────────────────────────────────\n"),
+        );
+        process.stdout.write(
+          sumColor(`  ${passes}/${checks} checks passed (${pct}%)\n`),
+        );
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n\n"),
+        );
+        return;
+      }
+
+      // ── /memory — Manage Long-Term Memory ────────────────────────────╼
+      if (submission.command === "memory") {
+        const text = (submission.text ?? "").trim();
+        const parts = text.split(/\s+/).filter(Boolean);
+        const subCmd = parts[0]?.toLowerCase() || "list";
+        const memoryPath = path.join(
+          os.homedir(),
+          ".hex4code",
+          "memory.json",
+        );
+
+        const loadMemory = (): Array<{
+          id: string;
+          text: string;
+          createdAt: string;
+        }> => {
+          try {
+            if (fs.existsSync(memoryPath))
+              return JSON.parse(
+                fs.readFileSync(memoryPath, "utf8"),
+              );
+          } catch {
+            /* ignore */
+          }
+          return [];
+        };
+        const saveMemory = (
+          items: Array<{
+            id: string;
+            text: string;
+            createdAt: string;
+          }>,
+        ) => {
+          fs.mkdirSync(path.dirname(memoryPath), {
+            recursive: true,
+          });
+          fs.writeFileSync(
+            memoryPath,
+            JSON.stringify(items, null, 2),
+            "utf8",
+          );
+        };
+
+        process.stdout.write(
+          chalk.bold.cyan("\nLong-Term Memory\n"),
+        );
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n"),
+        );
+
+        if (subCmd === "list" || subCmd === "ls") {
+          const items = loadMemory();
+          if (items.length === 0) {
+            process.stdout.write(
+              chalk.dim("  No memories stored.\n"),
+            );
+            process.stdout.write(
+              chalk.dim("  Use /memory add <text> to create one.\n"),
+            );
+          } else {
+            for (const item of items) {
+              process.stdout.write(
+                `  ${chalk.cyan(item.id.slice(0, 6))}  ${item.text.slice(0, 70)}\n`,
+              );
+              process.stdout.write(
+                chalk.dim(`       ${item.createdAt}\n`),
+              );
+            }
+          }
+        } else if (subCmd === "add") {
+          const content = parts.slice(1).join(" ").trim();
+          if (!content) {
+            process.stdout.write(
+              chalk.yellow("Usage: /memory add <text>\n"),
+            );
+          } else {
+            const items = loadMemory();
+            const id = `mem_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+            items.push({
+              id,
+              text: content,
+              createdAt: new Date().toISOString(),
+            });
+            saveMemory(items);
+            process.stdout.write(
+              chalk.green(
+                `  Memory added: ${id.slice(0, 6)} → "${content.slice(0, 50)}"\n`,
+              ),
+            );
+          }
+        } else if (subCmd === "delete" || subCmd === "rm") {
+          const idPrefix = parts[1] || "";
+          const items = loadMemory();
+          const idx = items.findIndex((i) =>
+            i.id.startsWith(idPrefix),
+          );
+          if (idx === -1) {
+            process.stdout.write(
+              chalk.red(`  Memory "${idPrefix}" not found.\n`),
+            );
+          } else {
+            const removed = items.splice(idx, 1)[0];
+            saveMemory(items);
+            process.stdout.write(
+              chalk.green(
+                `  Memory deleted: "${removed.text.slice(0, 50)}"\n`,
+              ),
+            );
+          }
+        } else if (subCmd === "clear") {
+          saveMemory([]);
+          process.stdout.write(
+            chalk.yellow("  All memories cleared.\n"),
+          );
+        } else {
+          process.stdout.write(
+            chalk.dim(
+              "  Commands: list, add <text>, delete <id>, clear\n",
+            ),
+          );
+        }
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n\n"),
+        );
+        return;
+      }
+
+      // ── /release-notes — Show CHANGELOG ──────────────────────────────╼
+      if (submission.command === "release-notes") {
+        process.stdout.write(
+          chalk.bold.cyan("\nRelease Notes (CHANGELOG)\n"),
+        );
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n"),
+        );
+        const candidates = [
+          path.join(projectRoot, "CHANGELOG.md"),
+          path.resolve(projectRoot, "..", "CHANGELOG.md"),
+          path.resolve(projectRoot, "..", "..", "CHANGELOG.md"),
+        ];
+        let found = false;
+        for (const candidate of candidates) {
+          try {
+            if (fs.existsSync(candidate)) {
+              const raw = fs.readFileSync(candidate, "utf8");
+              const match = raw.match(
+                /##\s*\[[\d.]+\].*?\n([\s\S]*?)(?=##\s*\[|$)/,
+              );
+              process.stdout.write(
+                (
+                  match
+                    ? match[0]
+                    : raw.split("\n").slice(0, 50).join("\n")
+                ).trim() + "\n",
+              );
+              found = true;
+              break;
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+        if (!found)
+          process.stdout.write(
+            chalk.dim("  CHANGELOG.md not found.\n"),
+          );
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n\n"),
+        );
+        return;
+      }
+
+      // ── /status — Show Connection Status ─────────────────────────────╼
+      if (submission.command === "status") {
+        const activeId = sessionManager.getActiveSessionId();
+        const resolved = resolveCurrentSettings(projectRoot);
+        const configured = detectConfiguredProviders(process.env);
+        const activeStatus = activeId
+          ? sessionManager.getSession(activeId)
+          : null;
+
+        process.stdout.write(
+          chalk.bold.cyan("\nConnection Status\n"),
+        );
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n"),
+        );
+
+        process.stdout.write(chalk.bold("Active Model:\n"));
+        process.stdout.write(
+          `  ${chalk.green(resolved.model)}\n`,
+        );
+        process.stdout.write(
+          `  Base URL: ${resolved.baseURL}\n`,
+        );
+        process.stdout.write(
+          `  API Key:  ${resolved.apiKey ? chalk.green("configured") : chalk.red("NOT SET")}\n`,
+        );
+
+        process.stdout.write(chalk.bold("\nSession:\n"));
+        if (activeStatus) {
+          const icon =
+            activeStatus.status === "completed"
+              ? chalk.green("●")
+              : activeStatus.status === "processing"
+                ? chalk.yellow("●")
+                : activeStatus.status === "failed"
+                  ? chalk.red("●")
+                  : chalk.dim("●");
+          process.stdout.write(`  ${icon} ${activeStatus.status}\n`);
+          process.stdout.write(
+            `  ID:      ${activeStatus.id.slice(0, 8)}\n`,
+          );
+          process.stdout.write(
+            `  Tokens:  ${activeStatus.activeTokens.toLocaleString()}\n`,
+          );
+          process.stdout.write(
+            `  Cost:    $${activeStatus.totalCost.toFixed(6)}\n`,
+          );
+        } else {
+          process.stdout.write(
+            chalk.dim("  No active session\n"),
+          );
+        }
+
+        process.stdout.write(chalk.bold("\nProviders:\n"));
+        if (configured.length === 0) {
+          process.stdout.write(
+            chalk.yellow("  None configured\n"),
+          );
+        } else {
+          for (const pid of configured) {
+            try {
+              const { getProvider } = await import(
+                "@hex4/core/models/provider-registry"
+              );
+              const p = getProvider(pid);
+              const keySet = p ? process.env[p.apiKeyEnv] : null;
+              process.stdout.write(
+                `  ${chalk.green("●")} ${p?.name || pid}${keySet ? chalk.green(" (key set)") : chalk.yellow(" (no key)")}\n`,
+              );
+            } catch {
+              process.stdout.write(
+                `  ${chalk.green("●")} ${pid}\n`,
+              );
+            }
+          }
+        }
+        process.stdout.write(
+          chalk.dim("═══════════════════════════════\n\n"),
         );
         return;
       }

@@ -20,7 +20,13 @@ export type SlashCommandKind =
   | "exit"
   | "clearcache"
   | "sessions"
-  | "hex4";
+  | "hex4"
+  | "config"
+  | "context"
+  | "doctor"
+  | "memory"
+  | "release-notes"
+  | "status";
 
 export type SlashCommandItem = {
   kind: SlashCommandKind;
@@ -150,6 +156,47 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     label: "/insights",
     description:
       "Route history insights — show model performance analytics per task type",
+  },
+  {
+    kind: "config",
+    name: "config",
+    label: "/config",
+    description:
+      "Show current resolved configuration (model, provider, API, MCP)",
+  },
+  {
+    kind: "context",
+    name: "context",
+    label: "/context",
+    description:
+      "Show context window usage, active tokens, and compression status",
+  },
+  {
+    kind: "doctor",
+    name: "doctor",
+    label: "/doctor",
+    description:
+      "Run diagnostic checks — providers, tools, MCP, project setup",
+  },
+  {
+    kind: "memory",
+    name: "memory",
+    label: "/memory",
+    description:
+      "Manage long-term memory — list, add, remove remembered facts",
+  },
+  {
+    kind: "release-notes",
+    name: "release-notes",
+    label: "/release-notes",
+    description: "Show latest version changes from CHANGELOG",
+  },
+  {
+    kind: "status",
+    name: "status",
+    label: "/status",
+    description:
+      "Show connection status — active providers, model, session info",
   },
 ];
 
