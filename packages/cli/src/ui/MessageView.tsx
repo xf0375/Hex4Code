@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { renderMarkdown } from "./markdown";
-import type { SessionMessage } from "@hex4/core/session";
+import type { SessionMessage } from "@hex4code/core/session";
 
 type Props = {
   message: SessionMessage;

@@ -17,7 +17,7 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@hex4/core/*": ["../core/src/*"]
+      "@hex4code/core/*": ["../core/src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

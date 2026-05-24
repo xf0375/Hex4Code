@@ -1,4 +1,4 @@
-import type { SkillInfo } from "@hex4/core/session";
+import type { SkillInfo } from "@hex4code/core/session";
 
 export type SlashCommandKind =
   | "skill"
@@ -175,15 +175,13 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     kind: "doctor",
     name: "doctor",
     label: "/doctor",
-    description:
-      "Run diagnostic checks — providers, tools, MCP, project setup",
+    description: "Run diagnostic checks — providers, tools, MCP, project setup",
   },
   {
     kind: "memory",
     name: "memory",
     label: "/memory",
-    description:
-      "Manage long-term memory — list, add, remove remembered facts",
+    description: "Manage long-term memory — list, add, remove remembered facts",
   },
   {
     kind: "release-notes",

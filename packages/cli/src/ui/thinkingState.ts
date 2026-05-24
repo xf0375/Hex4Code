@@ -1,4 +1,4 @@
-import type { SessionMessage } from "@hex4/core/session";
+import type { SessionMessage } from "@hex4code/core/session";
 
 /**
  * Returns the message id of the assistant "thinking" message that should stay

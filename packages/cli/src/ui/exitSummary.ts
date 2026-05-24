@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import gradientString from "gradient-string";
-import type { SessionEntry, SessionMessage } from "@hex4/core/session";
+import type { SessionEntry, SessionMessage } from "@hex4code/core/session";
 
 type ExitSummaryInput = {
   session: SessionEntry | null;

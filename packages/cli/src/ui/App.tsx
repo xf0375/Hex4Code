@@ -21,14 +21,14 @@ import {
   type SessionStatus,
   type SkillInfo,
   type UserPromptContent,
-} from "@hex4/core/session";
+} from "@hex4code/core/session";
 import {
   applyModelConfigSelection,
   resolveSettingsSources,
   type Hex4codeSettings,
   type ModelConfigSelection,
   type ResolvedHex4codeSettings,
-} from "@hex4/core/settings";
+} from "@hex4code/core/settings";
 import { PromptInput, type PromptSubmission } from "./PromptInput";
 import { MessageView } from "./MessageView";
 import { SessionList } from "./SessionList";
@@ -42,12 +42,12 @@ import {
   type AskUserQuestionAnswers,
 } from "./askUserQuestion";
 import { buildExitSummaryText } from "./exitSummary";
-import { createClient } from "@hex4/core/models/provider-client";
-import { PROVIDERS } from "@hex4/core/models/provider-registry";
+import { createClient } from "@hex4code/core/models/provider-client";
+import { PROVIDERS } from "@hex4code/core/models/provider-registry";
 import {
   routeTask,
   detectConfiguredProviders,
-} from "@hex4/core/models/model-router";
+} from "@hex4code/core/models/model-router";
 
 const DEFAULT_MODEL = "deepseek-v4-pro";
 const DEFAULT_BASE_URL = "https://api.deepseek.com";
@@ -100,7 +100,7 @@ export function App({
       detectProjectMode,
       getEffectiveMode,
       getModeLabel,
-    } = require("@hex4/core/agent-mode");
+    } = require("@hex4code/core/agent-mode");
     const envOverride = process.env.HEX4CODE_AGENT_MODE;
     const validatedOverride: "hex4" | "general" | undefined =
       envOverride === "hex4" || envOverride === "general"
@@ -115,7 +115,7 @@ export function App({
       projectRoot,
     );
     // Set global mode flag for executor
-    const { setAgentMode, getAgentMode } = require("@hex4/core/agent-mode");
+    const { setAgentMode, getAgentMode } = require("@hex4code/core/agent-mode");
     setAgentMode(effectiveMode);
     process.stderr.write(
       `[HEX4] 项目模式: ${getModeLabel(effectiveMode)}${validatedOverride ? " (env override)" : ""}\n`,
@@ -157,7 +157,7 @@ export function App({
         const {
           detectConfiguredProviders,
           getUnconfiguredProviders,
-        } = require("@hex4/core/models/model-router");
+        } = require("@hex4code/core/models/model-router");
         const configured = detectConfiguredProviders(process.env);
         const available = getUnconfiguredProviders();
         if (configured.length === 0 && available.length > 0) {
@@ -499,7 +499,11 @@ export function App({
         process.stdout.write(
           chalk.dim("───────────────────────────────────────\n"),
         );
-        const sessionsPath = path.join(os.homedir(), ".hex4", "sessions.json");
+        const sessionsPath = path.join(
+          os.homedir(),
+          ".hex4code",
+          "sessions.json",
+        );
         try {
           const fs = await import("fs");
           if (!fs.existsSync(sessionsPath)) {
@@ -562,7 +566,7 @@ export function App({
       // ── /recommend — Smart Model Recommendation ─────────────────────────
       if (submission.command === "recommend") {
         const { getSmartRecommendation, detectConfiguredProviders } =
-          await import("@hex4/core/models/model-router");
+          await import("@hex4code/core/models/model-router");
         const configured = detectConfiguredProviders(process.env);
         process.stdout.write(chalk.bold.cyan("\nSmart Model Recommendation\n"));
         process.stdout.write(
@@ -604,7 +608,7 @@ export function App({
       if (submission.command === "vote") {
         const text = (submission.text ?? "").trim();
         const { parallelVote, detectConfiguredProviders } =
-          await import("@hex4/core/models/model-router");
+          await import("@hex4code/core/models/model-router");
         const configured = detectConfiguredProviders(process.env);
         if (configured.length < 2) {
           process.stdout.write(
@@ -672,7 +676,9 @@ export function App({
       // ── /cache — Semantic Cache Stats ──────────────────────────────────
       if (submission.command === "cache") {
         try {
-          const { getGlobalCache } = require("@hex4/core/cache/semantic-cache");
+          const {
+            getGlobalCache,
+          } = require("@hex4code/core/cache/semantic-cache");
           const cache = getGlobalCache();
           const stats = cache.stats();
           process.stdout.write(chalk.bold.cyan("\nSemantic Cache\n"));
@@ -706,7 +712,7 @@ export function App({
           return;
         }
         const { benchmarkModels, detectConfiguredProviders } =
-          await import("@hex4/core/models/model-router");
+          await import("@hex4code/core/models/model-router");
         const configured = detectConfiguredProviders(process.env);
         process.stdout.write(
           chalk.bold.cyan(
@@ -745,7 +751,7 @@ export function App({
       if (submission.command === "quota") {
         const text = (submission.text ?? "").trim();
         const { loadQuota, setQuotaLimit, checkQuota, saveQuota } =
-          await import("@hex4/core/models/model-router");
+          await import("@hex4code/core/models/model-router");
         const parts = text.split(/\s+/).filter(Boolean);
         const subCmd = parts[0]?.toLowerCase() || "status";
         if (subCmd === "set" && parts.length >= 3) {
@@ -803,7 +809,7 @@ export function App({
       // ── /insights — Route History Insights ─────────────────────────────
       if (submission.command === "insights") {
         const { getRouteInsights, getSuggestedWeights } =
-          await import("@hex4/core/models/model-router");
+          await import("@hex4code/core/models/model-router");
         const insights = getRouteInsights();
         process.stdout.write(chalk.bold.cyan("\nRoute Insights\n"));
         process.stdout.write(
@@ -870,9 +876,7 @@ export function App({
           );
           return;
         }
-        process.stdout.write(
-          chalk.cyan("Compacting session context...\n"),
-        );
+        process.stdout.write(chalk.cyan("Compacting session context...\n"));
         try {
           await sessionManager.compactSession(activeId);
           const updated = sessionManager.getSession(activeId);
@@ -903,18 +907,14 @@ export function App({
         const configured = detectConfiguredProviders(process.env);
         let modelDef: any = null;
         try {
-          const m = await import(
-            "@hex4/core/models/provider-registry"
-          );
+          const m = await import("@hex4code/core/models/provider-registry");
           modelDef = m.getModelDef(resolved.model);
         } catch {
           /* ignore */
         }
 
         process.stdout.write(chalk.bold.cyan("\nCurrent Configuration\n"));
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         process.stdout.write(chalk.bold("Model:\n"));
         process.stdout.write(
@@ -922,9 +922,7 @@ export function App({
         );
         if (modelDef) {
           process.stdout.write(`  Label:        ${modelDef.label}\n`);
-          process.stdout.write(
-            `  Provider:     ${modelDef.provider}\n`,
-          );
+          process.stdout.write(`  Provider:     ${modelDef.provider}\n`);
           process.stdout.write(
             `  Ctx Window:   ${Math.round(modelDef.contextWindow / 1000)}K tokens\n`,
           );
@@ -937,14 +935,10 @@ export function App({
         process.stdout.write(
           `  Thinking:     ${resolved.thinkingEnabled ? chalk.green("enabled") : chalk.dim("disabled")}\n`,
         );
-        process.stdout.write(
-          `  Effort:       ${resolved.reasoningEffort}\n`,
-        );
+        process.stdout.write(`  Effort:       ${resolved.reasoningEffort}\n`);
 
         process.stdout.write(chalk.bold("\nAPI:\n"));
-        process.stdout.write(
-          `  Base URL:     ${resolved.baseURL}\n`,
-        );
+        process.stdout.write(`  Base URL:     ${resolved.baseURL}\n`);
         const keySuffix = resolved.apiKey
           ? "****" + resolved.apiKey.slice(-4)
           : "NOT SET";
@@ -965,9 +959,7 @@ export function App({
           resolved.mcpServers &&
           Object.keys(resolved.mcpServers).length > 0
         ) {
-          for (const [name, srv] of Object.entries(
-            resolved.mcpServers,
-          )) {
+          for (const [name, srv] of Object.entries(resolved.mcpServers)) {
             process.stdout.write(
               `  ${chalk.cyan(name)}: ${srv.command} ${(srv.args ?? []).join(" ")}\n`,
             );
@@ -975,11 +967,7 @@ export function App({
         } else process.stdout.write(chalk.dim("  (none)\n"));
 
         process.stdout.write(chalk.bold("\nConfig Sources:\n"));
-        const userPath = path.join(
-          os.homedir(),
-          ".hex4code",
-          "settings.json",
-        );
+        const userPath = path.join(os.homedir(), ".hex4code", "settings.json");
         const projectPath = path.join(
           projectRoot,
           ".hex4code",
@@ -993,9 +981,7 @@ export function App({
         );
         process.stdout.write(`  Env:     HEX4CODE_* variables\n`);
 
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n\n"));
         return;
       }
 
@@ -1006,22 +992,16 @@ export function App({
         let ctxWindow = 128000;
         let compactThreshold = 128 * 1024;
         try {
-          const mr = await import(
-            "@hex4/core/models/model-router"
-          );
-          const st = await import("@hex4/core/session-types");
+          const mr = await import("@hex4code/core/models/model-router");
+          const st = await import("@hex4code/core/session-types");
           ctxWindow = mr.getContextWindow(resolved.model);
-          compactThreshold = st.getCompactPromptTokenThreshold(
-            resolved.model,
-          );
+          compactThreshold = st.getCompactPromptTokenThreshold(resolved.model);
         } catch {
           /* use defaults */
         }
 
         process.stdout.write(chalk.bold.cyan("\nContext Usage\n"));
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n"));
         process.stdout.write(
           `  Model:          ${chalk.green(resolved.model)}\n`,
         );
@@ -1033,17 +1013,14 @@ export function App({
         );
 
         if (!activeId) {
-          process.stdout.write(
-            chalk.dim("  No active session.\n"),
-          );
+          process.stdout.write(chalk.dim("  No active session.\n"));
         } else {
           const session = sessionManager.getSession(activeId);
           if (session) {
             const ratio = session.activeTokens / ctxWindow;
             const barW = 30;
             const filled = Math.round(Math.min(ratio, 1) * barW);
-            const bar =
-              "█".repeat(filled) + "░".repeat(barW - filled);
+            const bar = "█".repeat(filled) + "░".repeat(barW - filled);
             const barColor =
               ratio > 0.95
                 ? chalk.red
@@ -1065,8 +1042,7 @@ export function App({
             );
             process.stdout.write(`  Status:         ${status}\n`);
 
-            const msgs =
-              sessionManager.listSessionMessages(activeId);
+            const msgs = sessionManager.listSessionMessages(activeId);
             const compacted = msgs.filter((m) => m.compacted).length;
             const active = msgs.filter((m) => !m.compacted).length;
             process.stdout.write(
@@ -1076,8 +1052,7 @@ export function App({
               `  Total Cost:     $${session.totalCost.toFixed(6)}\n`,
             );
 
-            const remaining =
-              compactThreshold - session.activeTokens;
+            const remaining = compactThreshold - session.activeTokens;
             if (remaining > 0) {
               process.stdout.write(
                 chalk.dim(
@@ -1092,14 +1067,10 @@ export function App({
               );
             }
           } else {
-            process.stdout.write(
-              chalk.yellow("  Session data unavailable.\n"),
-            );
+            process.stdout.write(chalk.yellow("  Session data unavailable.\n"));
           }
         }
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n\n"));
         return;
       }
 
@@ -1109,12 +1080,8 @@ export function App({
         let checks = 0;
         let passes = 0;
 
-        process.stdout.write(
-          chalk.bold.cyan("\nDiagnostic Report\n"),
-        );
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n"),
-        );
+        process.stdout.write(chalk.bold.cyan("\nDiagnostic Report\n"));
+        process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         // 1. Node version
         checks++;
@@ -1142,35 +1109,25 @@ export function App({
         // 3. Provider connection tests
         const configured = detectConfiguredProviders(process.env);
         if (configured.length > 0) {
-          process.stdout.write(
-            chalk.dim("  Testing providers...\n"),
-          );
+          process.stdout.write(chalk.dim("  Testing providers...\n"));
           for (const pid of configured) {
             checks++;
             try {
-              const { testProviderConnection } = await import(
-                "@hex4/core/models/model-router"
-              );
-              const { getProvider } = await import(
-                "@hex4/core/models/provider-registry"
-              );
+              const { testProviderConnection } =
+                await import("@hex4code/core/models/model-router");
+              const { getProvider } =
+                await import("@hex4code/core/models/provider-registry");
               const p = getProvider(pid);
               if (!p) {
-                process.stdout.write(
-                  `  ${chalk.red("○")} ${pid}: unknown\n`,
-                );
+                process.stdout.write(`  ${chalk.red("○")} ${pid}: unknown\n`);
                 continue;
               }
               const testModel =
-                p.models.find((m: any) =>
-                  m.capabilities.includes("chat"),
-                ) || p.models[0];
-              const key =
-                process.env[p.apiKeyEnv] || resolved.apiKey || "";
+                p.models.find((m: any) => m.capabilities.includes("chat")) ||
+                p.models[0];
+              const key = process.env[p.apiKeyEnv] || resolved.apiKey || "";
               if (!key) {
-                process.stdout.write(
-                  `  ${chalk.yellow("○")} ${pid}: no key\n`,
-                );
+                process.stdout.write(`  ${chalk.yellow("○")} ${pid}: no key\n`);
                 continue;
               }
               const result = await testProviderConnection(
@@ -1189,15 +1146,11 @@ export function App({
                 );
               }
             } catch {
-              process.stdout.write(
-                `  ${chalk.red("○")} ${pid}: test failed\n`,
-              );
+              process.stdout.write(`  ${chalk.red("○")} ${pid}: test failed\n`);
             }
           }
         } else {
-          process.stdout.write(
-            chalk.yellow("○ No providers configured\n"),
-          );
+          process.stdout.write(chalk.yellow("○ No providers configured\n"));
           checks++;
         }
 
@@ -1208,9 +1161,7 @@ export function App({
           Object.keys(resolved.mcpServers).length > 0
         ) {
           const statuses = sessionManager.getMcpStatus();
-          const ready = statuses.filter(
-            (s) => s.status === "ready",
-          ).length;
+          const ready = statuses.filter((s) => s.status === "ready").length;
           process.stdout.write(
             `${ready === statuses.length ? chalk.green("●") : chalk.yellow("●")} MCP: ${ready}/${statuses.length} ready\n`,
           );
@@ -1233,28 +1184,19 @@ export function App({
           fs.existsSync(projCfgPath)
             ? chalk.green("●") +
                 chalk.green(" Project config: .hex4code/settings.json\n")
-            : chalk.dim("●") +
-                chalk.dim(" Project config: none\n"),
+            : chalk.dim("●") + chalk.dim(" Project config: none\n"),
         );
         passes++;
 
         // Summary
         const pct = Math.round((passes / checks) * 100);
         const sumColor =
-          pct === 100
-            ? chalk.green
-            : pct >= 70
-              ? chalk.yellow
-              : chalk.red;
-        process.stdout.write(
-          chalk.dim("─────────────────────────────────\n"),
-        );
+          pct === 100 ? chalk.green : pct >= 70 ? chalk.yellow : chalk.red;
+        process.stdout.write(chalk.dim("─────────────────────────────────\n"));
         process.stdout.write(
           sumColor(`  ${passes}/${checks} checks passed (${pct}%)\n`),
         );
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n\n"));
         return;
       }
 
@@ -1263,11 +1205,7 @@ export function App({
         const text = (submission.text ?? "").trim();
         const parts = text.split(/\s+/).filter(Boolean);
         const subCmd = parts[0]?.toLowerCase() || "list";
-        const memoryPath = path.join(
-          os.homedir(),
-          ".hex4code",
-          "memory.json",
-        );
+        const memoryPath = path.join(os.homedir(), ".hex4code", "memory.json");
 
         const loadMemory = (): Array<{
           id: string;
@@ -1276,9 +1214,7 @@ export function App({
         }> => {
           try {
             if (fs.existsSync(memoryPath))
-              return JSON.parse(
-                fs.readFileSync(memoryPath, "utf8"),
-              );
+              return JSON.parse(fs.readFileSync(memoryPath, "utf8"));
           } catch {
             /* ignore */
           }
@@ -1294,26 +1230,16 @@ export function App({
           fs.mkdirSync(path.dirname(memoryPath), {
             recursive: true,
           });
-          fs.writeFileSync(
-            memoryPath,
-            JSON.stringify(items, null, 2),
-            "utf8",
-          );
+          fs.writeFileSync(memoryPath, JSON.stringify(items, null, 2), "utf8");
         };
 
-        process.stdout.write(
-          chalk.bold.cyan("\nLong-Term Memory\n"),
-        );
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n"),
-        );
+        process.stdout.write(chalk.bold.cyan("\nLong-Term Memory\n"));
+        process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         if (subCmd === "list" || subCmd === "ls") {
           const items = loadMemory();
           if (items.length === 0) {
-            process.stdout.write(
-              chalk.dim("  No memories stored.\n"),
-            );
+            process.stdout.write(chalk.dim("  No memories stored.\n"));
             process.stdout.write(
               chalk.dim("  Use /memory add <text> to create one.\n"),
             );
@@ -1322,17 +1248,13 @@ export function App({
               process.stdout.write(
                 `  ${chalk.cyan(item.id.slice(0, 6))}  ${item.text.slice(0, 70)}\n`,
               );
-              process.stdout.write(
-                chalk.dim(`       ${item.createdAt}\n`),
-              );
+              process.stdout.write(chalk.dim(`       ${item.createdAt}\n`));
             }
           }
         } else if (subCmd === "add") {
           const content = parts.slice(1).join(" ").trim();
           if (!content) {
-            process.stdout.write(
-              chalk.yellow("Usage: /memory add <text>\n"),
-            );
+            process.stdout.write(chalk.yellow("Usage: /memory add <text>\n"));
           } else {
             const items = loadMemory();
             const id = `mem_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -1351,9 +1273,7 @@ export function App({
         } else if (subCmd === "delete" || subCmd === "rm") {
           const idPrefix = parts[1] || "";
           const items = loadMemory();
-          const idx = items.findIndex((i) =>
-            i.id.startsWith(idPrefix),
-          );
+          const idx = items.findIndex((i) => i.id.startsWith(idPrefix));
           if (idx === -1) {
             process.stdout.write(
               chalk.red(`  Memory "${idPrefix}" not found.\n`),
@@ -1362,37 +1282,25 @@ export function App({
             const removed = items.splice(idx, 1)[0];
             saveMemory(items);
             process.stdout.write(
-              chalk.green(
-                `  Memory deleted: "${removed.text.slice(0, 50)}"\n`,
-              ),
+              chalk.green(`  Memory deleted: "${removed.text.slice(0, 50)}"\n`),
             );
           }
         } else if (subCmd === "clear") {
           saveMemory([]);
-          process.stdout.write(
-            chalk.yellow("  All memories cleared.\n"),
-          );
+          process.stdout.write(chalk.yellow("  All memories cleared.\n"));
         } else {
           process.stdout.write(
-            chalk.dim(
-              "  Commands: list, add <text>, delete <id>, clear\n",
-            ),
+            chalk.dim("  Commands: list, add <text>, delete <id>, clear\n"),
           );
         }
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n\n"));
         return;
       }
 
       // ── /release-notes — Show CHANGELOG ──────────────────────────────╼
       if (submission.command === "release-notes") {
-        process.stdout.write(
-          chalk.bold.cyan("\nRelease Notes (CHANGELOG)\n"),
-        );
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n"),
-        );
+        process.stdout.write(chalk.bold.cyan("\nRelease Notes (CHANGELOG)\n"));
+        process.stdout.write(chalk.dim("═══════════════════════════════\n"));
         const candidates = [
           path.join(projectRoot, "CHANGELOG.md"),
           path.resolve(projectRoot, "..", "CHANGELOG.md"),
@@ -1407,10 +1315,9 @@ export function App({
                 /##\s*\[[\d.]+\].*?\n([\s\S]*?)(?=##\s*\[|$)/,
               );
               process.stdout.write(
-                (
-                  match
-                    ? match[0]
-                    : raw.split("\n").slice(0, 50).join("\n")
+                (match
+                  ? match[0]
+                  : raw.split("\n").slice(0, 50).join("\n")
                 ).trim() + "\n",
               );
               found = true;
@@ -1421,12 +1328,8 @@ export function App({
           }
         }
         if (!found)
-          process.stdout.write(
-            chalk.dim("  CHANGELOG.md not found.\n"),
-          );
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n\n"),
-        );
+          process.stdout.write(chalk.dim("  CHANGELOG.md not found.\n"));
+        process.stdout.write(chalk.dim("═══════════════════════════════\n\n"));
         return;
       }
 
@@ -1439,20 +1342,12 @@ export function App({
           ? sessionManager.getSession(activeId)
           : null;
 
-        process.stdout.write(
-          chalk.bold.cyan("\nConnection Status\n"),
-        );
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n"),
-        );
+        process.stdout.write(chalk.bold.cyan("\nConnection Status\n"));
+        process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         process.stdout.write(chalk.bold("Active Model:\n"));
-        process.stdout.write(
-          `  ${chalk.green(resolved.model)}\n`,
-        );
-        process.stdout.write(
-          `  Base URL: ${resolved.baseURL}\n`,
-        );
+        process.stdout.write(`  ${chalk.green(resolved.model)}\n`);
+        process.stdout.write(`  Base URL: ${resolved.baseURL}\n`);
         process.stdout.write(
           `  API Key:  ${resolved.apiKey ? chalk.green("configured") : chalk.red("NOT SET")}\n`,
         );
@@ -1468,9 +1363,7 @@ export function App({
                   ? chalk.red("●")
                   : chalk.dim("●");
           process.stdout.write(`  ${icon} ${activeStatus.status}\n`);
-          process.stdout.write(
-            `  ID:      ${activeStatus.id.slice(0, 8)}\n`,
-          );
+          process.stdout.write(`  ID:      ${activeStatus.id.slice(0, 8)}\n`);
           process.stdout.write(
             `  Tokens:  ${activeStatus.activeTokens.toLocaleString()}\n`,
           );
@@ -1478,37 +1371,28 @@ export function App({
             `  Cost:    $${activeStatus.totalCost.toFixed(6)}\n`,
           );
         } else {
-          process.stdout.write(
-            chalk.dim("  No active session\n"),
-          );
+          process.stdout.write(chalk.dim("  No active session\n"));
         }
 
         process.stdout.write(chalk.bold("\nProviders:\n"));
         if (configured.length === 0) {
-          process.stdout.write(
-            chalk.yellow("  None configured\n"),
-          );
+          process.stdout.write(chalk.yellow("  None configured\n"));
         } else {
           for (const pid of configured) {
             try {
-              const { getProvider } = await import(
-                "@hex4/core/models/provider-registry"
-              );
+              const { getProvider } =
+                await import("@hex4code/core/models/provider-registry");
               const p = getProvider(pid);
               const keySet = p ? process.env[p.apiKeyEnv] : null;
               process.stdout.write(
                 `  ${chalk.green("●")} ${p?.name || pid}${keySet ? chalk.green(" (key set)") : chalk.yellow(" (no key)")}\n`,
               );
             } catch {
-              process.stdout.write(
-                `  ${chalk.green("●")} ${pid}\n`,
-              );
+              process.stdout.write(`  ${chalk.green("●")} ${pid}\n`);
             }
           }
         }
-        process.stdout.write(
-          chalk.dim("═══════════════════════════════\n\n"),
-        );
+        process.stdout.write(chalk.dim("═══════════════════════════════\n\n"));
         return;
       }
 
@@ -1579,7 +1463,7 @@ export function App({
             if (key) {
               const settingsPath = path.join(
                 os.homedir(),
-                ".hex4",
+                ".hex4code",
                 "settings.json",
               );
               let settings: Record<string, unknown> = {};
@@ -1591,7 +1475,7 @@ export function App({
                 /* ignore */
               }
               settings[`${provider.id}ApiKey`] = key;
-              fs.mkdirSync(path.join(os.homedir(), ".hex4"), {
+              fs.mkdirSync(path.join(os.homedir(), ".hex4code"), {
                 recursive: true,
               });
               fs.writeFileSync(
@@ -1601,14 +1485,14 @@ export function App({
               );
               process.stdout.write(
                 chalk.green(
-                  `✅ ${provider.name} API key saved to ~/.hex4/settings.json\n`,
+                  `✅ ${provider.name} API key saved to ~/.hex4code/settings.json\n`,
                 ),
               );
               // ── API Key 验证 ──────────────────────────────
               process.stdout.write(chalk.dim(`⏳ Testing connection...`));
               try {
                 const { testProviderConnection } =
-                  await require("@hex4/core/models/model-router");
+                  await require("@hex4code/core/models/model-router");
                 const testModel =
                   provider.models.find((m) =>
                     m.capabilities.includes("chat" as any),
@@ -1674,7 +1558,7 @@ export function App({
                     m.capabilities.includes("chat" as any),
                   ) || p.models[0];
                 const { testProviderConnection } =
-                  await require("@hex4/core/models/model-router");
+                  await require("@hex4code/core/models/model-router");
                 return {
                   id: pid,
                   result: await testProviderConnection(
@@ -2261,7 +2145,7 @@ export function createOpenAIClient(projectRoot: string = process.cwd()): {
 
 function getMachineId(): string | undefined {
   try {
-    const idPath = path.join(os.homedir(), ".hex4", "machine-id");
+    const idPath = path.join(os.homedir(), ".hex4code", "machine-id");
     if (fs.existsSync(idPath)) {
       const raw = fs.readFileSync(idPath, "utf8").trim();
       if (raw) {
@@ -2278,11 +2162,11 @@ function getMachineId(): string | undefined {
 }
 
 function getUserSettingsPath(): string {
-  return path.join(os.homedir(), ".hex4", "settings.json");
+  return path.join(os.homedir(), ".hex4code", "settings.json");
 }
 
 function getProjectSettingsPath(projectRoot: string): string {
-  return path.join(projectRoot, ".hex4", "settings.json");
+  return path.join(projectRoot, ".hex4code", "settings.json");
 }
 
 function formatThinkingMode(

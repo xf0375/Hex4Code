@@ -35,7 +35,7 @@ import {
 } from "./slashCommands";
 import type { SlashCommandItem, SlashCommandKind } from "./slashCommands";
 import { readClipboardImageAsync } from "./clipboard";
-import type { SkillInfo } from "@hex4/core/session";
+import type { SkillInfo } from "@hex4code/core/session";
 
 // Re-exported from prompt modules for backward compatibility
 export { useTerminalInput, parseTerminalInput } from "./prompt";
@@ -52,7 +52,7 @@ import SlashCommandMenu from "./SlashCommandMenu";
 import type {
   ModelConfigSelection,
   ReasoningEffort,
-} from "@hex4/core/settings";
+} from "@hex4code/core/settings";
 import DropdownMenu from "./DropdownMenu";
 
 export type PromptSubmission = {

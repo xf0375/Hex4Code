@@ -2,8 +2,8 @@ import React, { useMemo, useState } from "react";
 import { Box, Text } from "ink";
 import * as os from "node:os";
 import path from "node:path";
-import type { SkillInfo } from "@hex4/core/session";
-import type { ResolvedHex4codeSettings } from "@hex4/core/settings";
+import type { SkillInfo } from "@hex4code/core/session";
+import type { ResolvedHex4codeSettings } from "@hex4code/core/settings";
 import {
   buildSlashCommands,
   BUILTIN_SLASH_COMMANDS,

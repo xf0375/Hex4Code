@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Box, Text, useInput, useWindowSize } from "ink";
-import type { SessionEntry } from "@hex4/core/session";
+import type { SessionEntry } from "@hex4code/core/session";
 
 type Props = {
   sessions: SessionEntry[];

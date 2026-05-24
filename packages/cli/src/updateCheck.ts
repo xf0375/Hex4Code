@@ -132,7 +132,7 @@ export function compareVersions(a: string, b: string): number {
 }
 
 export function getUpdateStatePath(): string {
-  return path.join(os.homedir(), ".hex4", UPDATE_STATE_FILE);
+  return path.join(os.homedir(), ".hex4code", UPDATE_STATE_FILE);
 }
 
 async function promptUpdateChoice({
