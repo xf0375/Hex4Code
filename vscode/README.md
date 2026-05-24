@@ -41,7 +41,7 @@ Hex4Code 支持 agent skills，允许您扩展助手的能力：
 
 ## 截图示例
 
-![screenshot](resources/hex4code_screenshot.png)
+![screenshot](https://atomgit.com/zzwgbdt/Hex4Code/raw/master/vscode/resources/hex4code_screenshot.png)
 
 ## Hex4Code CLI
 
@@ -57,7 +57,7 @@ npm install -g @hex4code/cli
 
 ### 如何将 Hex4Code 从左侧边栏移动到右侧边栏（Secondary Side Bar）？
 
-![faq1](resources/faq1.gif)
+![faq1](https://atomgit.com/zzwgbdt/Hex4Code/raw/master/vscode/resources/faq1.gif)
 
 ### Hex4Code是否支持理解图片？
 
