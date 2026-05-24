@@ -92,6 +92,10 @@
       {
         "command": "hex4code.configureModelsWebView",
         "title": "Hex4Code: Open Model Configuration Panel"
+      },
+      {
+        "command": "hex4code.resetAllSettings",
+        "title": "Hex4Code: Reset All Settings"
       }
     ],
     "configuration": {

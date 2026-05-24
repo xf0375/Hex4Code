@@ -1374,6 +1374,65 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
+  // ── Reset All Settings ───────────────────────────────────────────────
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "hex4code.resetAllSettings",
+      async () => {
+        const confirm = await vscode.window.showWarningMessage(
+          "Reset ALL Hex4Code settings? This will delete all config files, cache, quota, memory, and route history.",
+          { modal: true },
+          "Reset All",
+        );
+        if (confirm !== "Reset All") return;
+
+        const homeDir = os.homedir();
+        const configDir = path.join(homeDir, ".hex4code");
+        const filesToDelete: string[] = [
+          path.join(configDir, "settings.json"),
+          path.join(configDir, "quota.json"),
+          path.join(configDir, "route-history.json"),
+          path.join(configDir, "memory.json"),
+          path.join(configDir, "cache", "semantic-cache.json"),
+        ];
+
+        const projectRoot =
+          vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+        if (projectRoot) {
+          filesToDelete.push(
+            path.join(projectRoot, ".hex4code", "settings.json"),
+          );
+        }
+
+        let deleted = 0,
+          failed = 0;
+        for (const filePath of filesToDelete) {
+          try {
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+              deleted++;
+            }
+          } catch {
+            failed++;
+          }
+        }
+
+        try {
+          const { resetGlobalCache } = require(
+            "./cache/semantic-cache",
+          );
+          resetGlobalCache();
+        } catch {
+          /* ignore */
+        }
+
+        vscode.window.showInformationMessage(
+          `Hex4Code settings reset: ${deleted} file(s) deleted${failed > 0 ? `, ${failed} failed` : ""}. Restart VS Code to apply.`,
+        );
+      },
+    ),
+  );
+
   // ── Provider Auto-Detection ─────────────────────────────────────────
   (async () => {
     try {

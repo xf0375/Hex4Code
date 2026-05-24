@@ -33,7 +33,7 @@ import {
   filterSlashCommands,
   findExactSlashCommand,
 } from "./slashCommands";
-import type { SlashCommandItem } from "./slashCommands";
+import type { SlashCommandItem, SlashCommandKind } from "./slashCommands";
 import { readClipboardImageAsync } from "./clipboard";
 import type { SkillInfo } from "@hex4/core/session";
 
@@ -59,7 +59,7 @@ export type PromptSubmission = {
   text: string;
   imageUrls: string[];
   selectedSkills?: SkillInfo[];
-  command?: "new" | "resume" | "mcp" | "exit";
+  command?: SlashCommandKind;
 };
 
 type Props = {
@@ -703,6 +703,18 @@ export const PromptInput = React.memo(function PromptInput({
       clearUndoRedoStacks();
       return;
     }
+    // fallback: forward unhandled command kinds to App.tsx handler
+    onSubmit({
+      text: item.label,
+      imageUrls: [],
+      selectedSkills,
+      command: item.kind,
+    });
+    setBuffer(EMPTY_BUFFER);
+    clearUndoRedoStacks();
+    setImageUrls([]);
+    setSelectedSkills([]);
+    setShowSkillsDropdown(false);
   }
 
   function submitCurrentBuffer(): void {
