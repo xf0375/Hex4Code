@@ -9,7 +9,9 @@ export function renderMarkdown(text: string): string {
   return fenceSegments
     .map((segment) => {
       if (segment.kind === "code") {
-        const langTag = segment.lang ? chalk.dim(`[${segment.lang}]`) + "\n" : "";
+        const langTag = segment.lang
+          ? chalk.dim(`[${segment.lang}]`) + "\n"
+          : "";
         return langTag + chalk.cyan(segment.body);
       }
       return renderInlineBlock(segment.body);
@@ -17,7 +19,9 @@ export function renderMarkdown(text: string): string {
     .join("");
 }
 
-type FenceSegment = { kind: "text"; body: string } | { kind: "code"; lang: string; body: string };
+type FenceSegment =
+  | { kind: "text"; body: string }
+  | { kind: "code"; lang: string; body: string };
 
 function splitByFences(text: string): FenceSegment[] {
   const segments: FenceSegment[] = [];
@@ -44,7 +48,11 @@ function splitByFences(text: string): FenceSegment[] {
         fenceLang = fenceMatch[1] ?? "";
         fenceBody = [];
       } else {
-        segments.push({ kind: "code", lang: fenceLang, body: fenceBody.join("\n") });
+        segments.push({
+          kind: "code",
+          lang: fenceLang,
+          body: fenceBody.join("\n"),
+        });
         inFence = false;
         fenceLang = "";
         fenceBody = [];
@@ -60,7 +68,11 @@ function splitByFences(text: string): FenceSegment[] {
   }
 
   if (inFence) {
-    segments.push({ kind: "code", lang: fenceLang, body: fenceBody.join("\n") });
+    segments.push({
+      kind: "code",
+      lang: fenceLang,
+      body: fenceBody.join("\n"),
+    });
   } else {
     flushText();
   }
@@ -79,7 +91,10 @@ function renderInlineLine(line: string): string {
   const headingMatch = /^(\s*)(#{1,6})\s+(.*)$/.exec(line);
   if (headingMatch) {
     const [, lead, hashes, content] = headingMatch;
-    const styled = hashes.length <= 2 ? chalk.bold.cyanBright(content) : chalk.bold.cyan(content);
+    const styled =
+      hashes.length <= 2
+        ? chalk.bold.cyanBright(content)
+        : chalk.bold.cyan(content);
     return `${lead}${chalk.dim(hashes)} ${styled}`;
   }
 
@@ -111,7 +126,9 @@ function renderInlineSpans(text: string): string {
   let result = text;
   result = result.replace(/`([^`]+)`/g, (_, inner) => chalk.cyan(inner));
   result = result.replace(/\*\*([^*]+)\*\*/g, (_, inner) => chalk.bold(inner));
-  result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, (_, inner) => chalk.italic(inner));
+  result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, (_, inner) =>
+    chalk.italic(inner),
+  );
   result = result.replace(/_([^_\n]+)_/g, (_, inner) => chalk.italic(inner));
   return result;
 }

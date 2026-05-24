@@ -26,12 +26,17 @@ function isImageFilePath(value: string): boolean {
 }
 
 function mimeTypeForPath(value: string): string {
-  return IMAGE_MIME_BY_EXT.get(path.extname(value.trim()).toLowerCase()) ?? PNG_MIME;
+  return (
+    IMAGE_MIME_BY_EXT.get(path.extname(value.trim()).toLowerCase()) ?? PNG_MIME
+  );
 }
 
 function tryRun(command: string, args: string[]): Buffer | null {
   try {
-    const result = spawnSync(command, args, { encoding: "buffer", maxBuffer: 32 * 1024 * 1024 });
+    const result = spawnSync(command, args, {
+      encoding: "buffer",
+      maxBuffer: 32 * 1024 * 1024,
+    });
     if (result.status !== 0 || !result.stdout || result.stdout.length === 0) {
       return null;
     }
@@ -43,7 +48,10 @@ function tryRun(command: string, args: string[]): Buffer | null {
 
 function tryRunStatus(command: string, args: string[]): boolean {
   try {
-    const result = spawnSync(command, args, { encoding: "buffer", maxBuffer: 32 * 1024 * 1024 });
+    const result = spawnSync(command, args, {
+      encoding: "buffer",
+      maxBuffer: 32 * 1024 * 1024,
+    });
     return result.status === 0;
   } catch {
     return false;
@@ -93,7 +101,10 @@ function readMacClipboardImage(): ClipboardImage | null {
       }
     }
 
-    const fileUrl = tryRun("osascript", ["-e", "get POSIX path of (the clipboard as «class furl»)"]);
+    const fileUrl = tryRun("osascript", [
+      "-e",
+      "get POSIX path of (the clipboard as «class furl»)",
+    ]);
     const filePath = fileUrl?.toString("utf8").trim();
     if (filePath) {
       return readImageFile(filePath);
@@ -115,13 +126,22 @@ export function readClipboardImage(): ClipboardImage | null {
   }
 
   if (process.platform === "linux") {
-    const xclip = tryRun("xclip", ["-selection", "clipboard", "-t", "image/png", "-o"]);
+    const xclip = tryRun("xclip", [
+      "-selection",
+      "clipboard",
+      "-t",
+      "image/png",
+      "-o",
+    ]);
     if (xclip && xclip.length > 0) {
       return { dataUrl: bufferToDataUrl(xclip, PNG_MIME), mimeType: PNG_MIME };
     }
     const wlPaste = tryRun("wl-paste", ["--type", "image/png"]);
     if (wlPaste && wlPaste.length > 0) {
-      return { dataUrl: bufferToDataUrl(wlPaste, PNG_MIME), mimeType: PNG_MIME };
+      return {
+        dataUrl: bufferToDataUrl(wlPaste, PNG_MIME),
+        mimeType: PNG_MIME,
+      };
     }
     return null;
   }

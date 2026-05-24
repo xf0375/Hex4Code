@@ -8,7 +8,11 @@ type Props = {
   onCancel: () => void;
 };
 
-export function SessionList({ sessions, onSelect, onCancel }: Props): React.ReactElement {
+export function SessionList({
+  sessions,
+  onSelect,
+  onCancel,
+}: Props): React.ReactElement {
   const [index, setIndex] = useState(0);
   const { columns, rows } = useWindowSize();
 
@@ -97,7 +101,13 @@ export function SessionList({ sessions, onSelect, onCancel }: Props): React.Reac
       paddingX={1}
       marginTop={1}
     >
-      <Box flexDirection="column" borderStyle="round" borderDimColor flexGrow={1} overflow="hidden">
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderDimColor
+        flexGrow={1}
+        overflow="hidden"
+      >
         {/* Header row */}
         <Box paddingX={1}>
           <Text bold color="cyanBright">
@@ -126,7 +136,9 @@ export function SessionList({ sessions, onSelect, onCancel }: Props): React.Reac
             return (
               <Box key={session.id} height={2} marginBottom={1}>
                 <Box>
-                  <Text color="#229ac3">{actualIndex === safeIndex ? "› " : "  "}</Text>
+                  <Text color="#229ac3">
+                    {actualIndex === safeIndex ? "› " : "  "}
+                  </Text>
                 </Box>
                 <Box flexDirection="column" flexGrow={1}>
                   <Box width={"100%"}>
@@ -145,18 +157,26 @@ export function SessionList({ sessions, onSelect, onCancel }: Props): React.Reac
               </Box>
             );
           })}
-          {scrollOffset > 0 || scrollOffset + maxVisibleSessions < sessions.length ? (
+          {scrollOffset > 0 ||
+          scrollOffset + maxVisibleSessions < sessions.length ? (
             <Box marginTop={1}>
-              {scrollOffset > 0 ? <Text dimColor>… {scrollOffset} newer sessions above. </Text> : null}
+              {scrollOffset > 0 ? (
+                <Text dimColor>… {scrollOffset} newer sessions above. </Text>
+              ) : null}
               {scrollOffset + maxVisibleSessions < sessions.length ? (
-                <Text dimColor>… {sessions.length - scrollOffset - maxVisibleSessions} older sessions below.</Text>
+                <Text dimColor>
+                  … {sessions.length - scrollOffset - maxVisibleSessions} older
+                  sessions below.
+                </Text>
               ) : null}
             </Box>
           ) : null}
         </Box>
         {/* Footer */}
         <Box>
-          <Text dimColor>↑/↓ navigate · PgUp/PgDn page · Enter select · Esc cancel</Text>
+          <Text dimColor>
+            ↑/↓ navigate · PgUp/PgDn page · Enter select · Esc cancel
+          </Text>
         </Box>
       </Box>
     </Box>
@@ -176,7 +196,10 @@ function formatTimestamp(value: string): string {
 }
 
 export function formatSessionTitle(value: string, max = 70): string {
-  return truncate(value.replace(/\r?\n/g, " ").replace(/\s+/g, " ").trim(), max);
+  return truncate(
+    value.replace(/\r?\n/g, " ").replace(/\s+/g, " ").trim(),
+    max,
+  );
 }
 
 function truncate(value: string, max: number): string {

@@ -1,6 +1,26 @@
 import type { SkillInfo } from "@hex4/core/session";
 
-export type SlashCommandKind = "skill" | "skills" | "model" | "provider" | "cost" | "vote" | "recommend" | "compact" | "cache" | "benchmark" | "quota" | "insights" | "new" | "init" | "resume" | "mcp" | "exit" | "clearcache" | "sessions" | "hex4";
+export type SlashCommandKind =
+  | "skill"
+  | "skills"
+  | "model"
+  | "provider"
+  | "cost"
+  | "vote"
+  | "recommend"
+  | "compact"
+  | "cache"
+  | "benchmark"
+  | "quota"
+  | "insights"
+  | "new"
+  | "init"
+  | "resume"
+  | "mcp"
+  | "exit"
+  | "clearcache"
+  | "sessions"
+  | "hex4";
 
 export type SlashCommandItem = {
   kind: SlashCommandKind;
@@ -21,7 +41,8 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     kind: "model",
     name: "model",
     label: "/model",
-    description: "Select model, thinking mode and effort control. Use /model list to browse all models.",
+    description:
+      "Select model, thinking mode and effort control. Use /model list to browse all models.",
   },
   {
     kind: "provider",
@@ -69,7 +90,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     kind: "sessions",
     name: "sessions",
     label: "/sessions",
-    description: "Manage sessions: list, search, delete, export"
+    description: "Manage sessions: list, search, delete, export",
   },
   {
     kind: "hex4",
@@ -87,7 +108,8 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     kind: "recommend",
     name: "recommend",
     label: "/recommend",
-    description: "Smart model recommendation — get best model for each task type",
+    description:
+      "Smart model recommendation — get best model for each task type",
   },
   {
     kind: "compact",
@@ -99,7 +121,8 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     kind: "vote",
     name: "vote",
     label: "/vote",
-    description: "Multi-model parallel vote — query multiple providers simultaneously",
+    description:
+      "Multi-model parallel vote — query multiple providers simultaneously",
   },
   {
     kind: "cache",
@@ -111,19 +134,22 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     kind: "benchmark",
     name: "benchmark",
     label: "/benchmark",
-    description: "Benchmark models — compare latency and response quality across providers",
+    description:
+      "Benchmark models — compare latency and response quality across providers",
   },
   {
     kind: "quota",
     name: "quota",
     label: "/quota",
-    description: "Usage quota management — view and set monthly token/cost limits",
+    description:
+      "Usage quota management — view and set monthly token/cost limits",
   },
   {
     kind: "insights",
     name: "insights",
     label: "/insights",
-    description: "Route history insights — show model performance analytics per task type",
+    description:
+      "Route history insights — show model performance analytics per task type",
   },
 ];
 
@@ -138,7 +164,10 @@ export function buildSlashCommands(skills: SkillInfo[]): SlashCommandItem[] {
   return [...skillItems, ...BUILTIN_SLASH_COMMANDS];
 }
 
-export function filterSlashCommands(items: SlashCommandItem[], token: string): SlashCommandItem[] {
+export function filterSlashCommands(
+  items: SlashCommandItem[],
+  token: string,
+): SlashCommandItem[] {
   if (!token.startsWith("/")) {
     return [];
   }
@@ -149,7 +178,10 @@ export function filterSlashCommands(items: SlashCommandItem[], token: string): S
   return items.filter((item) => item.name.toLowerCase().includes(query));
 }
 
-export function findExactSlashCommand(items: SlashCommandItem[], token: string): SlashCommandItem | null {
+export function findExactSlashCommand(
+  items: SlashCommandItem[],
+  token: string,
+): SlashCommandItem | null {
   if (!token.startsWith("/")) {
     return null;
   }
@@ -163,5 +195,7 @@ export function formatSlashCommandDescription(description: string): string {
 }
 
 export function formatSlashCommandLabel(item: SlashCommandItem): string {
-  return item.kind === "skill" && item.skill?.isLoaded ? `${item.label} ✓` : item.label;
+  return item.kind === "skill" && item.skill?.isLoaded
+    ? `${item.label} ✓`
+    : item.label;
 }

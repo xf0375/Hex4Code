@@ -7,7 +7,9 @@ import type { SessionMessage } from "@hex4/core/session";
  * collapse logic: at most one thinking bubble is open, and it is closed once a
  * regular assistant reply arrives.
  */
-export function findExpandedThinkingId(messages: SessionMessage[]): string | null {
+export function findExpandedThinkingId(
+  messages: SessionMessage[],
+): string | null {
   let expanded: string | null = null;
   for (const message of messages) {
     if (message.role !== "assistant") {

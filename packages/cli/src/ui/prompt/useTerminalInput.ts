@@ -24,9 +24,24 @@ export type InputKey = {
 
 const BACKSPACE_BYTES = new Set(["\u007F", "\b"]);
 const FORWARD_DELETE_SEQUENCES = new Set(["\u001B[3~", "\u001B[P"]);
-const HOME_SEQUENCES = new Set(["\u001B[H", "\u001B[1~", "\u001B[7~", "\u001BOH"]);
-const END_SEQUENCES = new Set(["\u001B[F", "\u001B[4~", "\u001B[8~", "\u001BOF"]);
-const SHIFT_RETURN_SEQUENCES = new Set(["\u001B\r", "\u001B[13;2u", "\u001B[13;2~", "\u001B[27;2;13~"]);
+const HOME_SEQUENCES = new Set([
+  "\u001B[H",
+  "\u001B[1~",
+  "\u001B[7~",
+  "\u001BOH",
+]);
+const END_SEQUENCES = new Set([
+  "\u001B[F",
+  "\u001B[4~",
+  "\u001B[8~",
+  "\u001BOF",
+]);
+const SHIFT_RETURN_SEQUENCES = new Set([
+  "\u001B\r",
+  "\u001B[13;2u",
+  "\u001B[13;2~",
+  "\u001B[27;2;13~",
+]);
 const META_RETURN_SEQUENCES = new Set(["\u001B[13;3u", "\u001B[13;4u"]);
 const CTRL_LEFT_SEQUENCES = new Set(["\u001B[1;5D", "\u001B[5D"]);
 const CTRL_RIGHT_SEQUENCES = new Set(["\u001B[1;5C", "\u001B[5C"]);
@@ -45,7 +60,10 @@ const CTRL_MINUS_SEQUENCES = new Set(["\u001B[45;5u", "\u001B[27;5;45~"]);
 // \u001B[27;6;45~ — extended format for function-like reporting
 const CTRL_SHIFT_MINUS_SEQUENCES = new Set(["\u001B[45;6u", "\u001B[27;6;45~"]);
 
-export function parseTerminalInput(data: Buffer | string): { input: string; key: InputKey } {
+export function parseTerminalInput(data: Buffer | string): {
+  input: string;
+  key: InputKey;
+} {
   const raw = String(data);
   let input = raw;
 
@@ -107,20 +125,32 @@ export function parseTerminalInput(data: Buffer | string): { input: string; key:
   const key: InputKey = {
     upArrow: raw === "\u001B[A",
     downArrow: raw === "\u001B[B",
-    leftArrow: raw === "\u001B[D" || CTRL_LEFT_SEQUENCES.has(raw) || META_LEFT_SEQUENCES.has(raw),
-    rightArrow: raw === "\u001B[C" || CTRL_RIGHT_SEQUENCES.has(raw) || META_RIGHT_SEQUENCES.has(raw),
+    leftArrow:
+      raw === "\u001B[D" ||
+      CTRL_LEFT_SEQUENCES.has(raw) ||
+      META_LEFT_SEQUENCES.has(raw),
+    rightArrow:
+      raw === "\u001B[C" ||
+      CTRL_RIGHT_SEQUENCES.has(raw) ||
+      META_RIGHT_SEQUENCES.has(raw),
     home: HOME_SEQUENCES.has(raw),
     end: END_SEQUENCES.has(raw),
     pageDown: raw === "\u001B[6~",
     pageUp: raw === "\u001B[5~",
-    return: raw === "\r" || SHIFT_RETURN_SEQUENCES.has(raw) || META_RETURN_SEQUENCES.has(raw),
+    return:
+      raw === "\r" ||
+      SHIFT_RETURN_SEQUENCES.has(raw) ||
+      META_RETURN_SEQUENCES.has(raw),
     escape: raw === "\u001B",
     ctrl: CTRL_LEFT_SEQUENCES.has(raw) || CTRL_RIGHT_SEQUENCES.has(raw),
     shift: SHIFT_RETURN_SEQUENCES.has(raw),
     tab: raw === "\t" || raw === "\u001B[Z",
     backspace: BACKSPACE_BYTES.has(raw),
     delete: FORWARD_DELETE_SEQUENCES.has(raw),
-    meta: META_LEFT_SEQUENCES.has(raw) || META_RIGHT_SEQUENCES.has(raw) || META_RETURN_SEQUENCES.has(raw),
+    meta:
+      META_LEFT_SEQUENCES.has(raw) ||
+      META_RIGHT_SEQUENCES.has(raw) ||
+      META_RETURN_SEQUENCES.has(raw),
     focusIn: raw === TERMINAL_FOCUS_IN,
     focusOut: raw === TERMINAL_FOCUS_OUT,
   };
@@ -171,7 +201,7 @@ export function parseTerminalInput(data: Buffer | string): { input: string; key:
 
 export function useTerminalInput(
   inputHandler: (input: string, key: InputKey) => void,
-  options: { isActive?: boolean } = {}
+  options: { isActive?: boolean } = {},
 ): void {
   const { stdin, setRawMode } = useStdin();
   const isActive = options.isActive ?? true;

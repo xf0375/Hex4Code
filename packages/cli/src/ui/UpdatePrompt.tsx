@@ -15,7 +15,12 @@ type Props = {
   onSelect: (choice: UpdatePromptChoice) => void;
 };
 
-export function UpdatePrompt({ currentVersion, latestVersion, installCommand, onSelect }: Props): React.ReactElement {
+export function UpdatePrompt({
+  currentVersion,
+  latestVersion,
+  installCommand,
+  onSelect,
+}: Props): React.ReactElement {
   const { exit } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const options: UpdatePromptOption[] = [
@@ -35,7 +40,9 @@ export function UpdatePrompt({ currentVersion, latestVersion, installCommand, on
 
   useInput((input, key) => {
     if (key.upArrow) {
-      setSelectedIndex((index) => (index - 1 + options.length) % options.length);
+      setSelectedIndex(
+        (index) => (index - 1 + options.length) % options.length,
+      );
       return;
     }
     if (key.downArrow || key.tab) {
@@ -61,7 +68,8 @@ export function UpdatePrompt({ currentVersion, latestVersion, installCommand, on
   return (
     <Box flexDirection="column" marginY={1}>
       <Text bold>
-        Hex4Code latest version has been released: {currentVersion} -&gt; {latestVersion}
+        Hex4Code latest version has been released: {currentVersion} -&gt;{" "}
+        {latestVersion}
       </Text>
       <Box flexDirection="column" marginTop={1}>
         {options.map((option, index) => {
@@ -75,7 +83,9 @@ export function UpdatePrompt({ currentVersion, latestVersion, installCommand, on
         })}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>Use Up/Down to choose, Enter to confirm, Esc to ignore once.</Text>
+        <Text dimColor>
+          Use Up/Down to choose, Enter to confirm, Esc to ignore once.
+        </Text>
       </Box>
     </Box>
   );

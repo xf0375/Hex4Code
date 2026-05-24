@@ -25,9 +25,11 @@ type UpdateState = {
 const UPDATE_STATE_FILE = "update-check.json";
 const NPM_VIEW_TIMEOUT_MS = 5000;
 const MAX_NPM_VIEW_OUTPUT_CHARS = 64 * 1024;
-// Use default npm registry for update checks
+const TENCENT_MIRROR_REGISTRY = "https://registry.npmmirror.com";
 
-export async function promptForPendingUpdate(packageInfo: PackageInfo): Promise<{ installed: boolean }> {
+export async function promptForPendingUpdate(
+  packageInfo: PackageInfo,
+): Promise<{ installed: boolean }> {
   const state = readUpdateState();
   const pending = state.pending;
   if (!pending) {
@@ -57,14 +59,16 @@ export async function promptForPendingUpdate(packageInfo: PackageInfo): Promise<
     if (ok) {
       writeUpdateState({ ...state, pending: null });
       process.stdout.write(
-        `\n${chalk.red("Hex4Code has been updated. Please restart the CLI to use the new version.")}\n\n`
+        `\n${chalk.red("Hex4Code has been updated. Please restart the CLI to use the new version.")}\n\n`,
       );
     }
     return { installed: ok };
   }
 
   if (choice === "ignore-version") {
-    const ignoredVersions = Array.from(new Set([...(state.ignoredVersions ?? []), pending.latestVersion]));
+    const ignoredVersions = Array.from(
+      new Set([...(state.ignoredVersions ?? []), pending.latestVersion]),
+    );
     writeUpdateState({ ...state, pending: null, ignoredVersions });
     return { installed: false };
   }
@@ -73,14 +77,19 @@ export async function promptForPendingUpdate(packageInfo: PackageInfo): Promise<
   return { installed: false };
 }
 
-export async function checkForNpmUpdate(packageInfo: PackageInfo): Promise<void> {
+export async function checkForNpmUpdate(
+  packageInfo: PackageInfo,
+): Promise<void> {
   if (!packageInfo.name || !packageInfo.version) {
     return;
   }
 
   try {
     const latestVersion = await fetchLatestNpmVersion(packageInfo.name);
-    if (!latestVersion || compareVersions(latestVersion, packageInfo.version) <= 0) {
+    if (
+      !latestVersion ||
+      compareVersions(latestVersion, packageInfo.version) <= 0
+    ) {
       clearPendingUpdate();
       return;
     }
@@ -154,7 +163,7 @@ async function promptUpdateChoice({
         installCommand,
         onSelect: handleSelect,
       }),
-      { exitOnCtrlC: false }
+      { exitOnCtrlC: false },
     );
   });
 }
@@ -174,21 +183,33 @@ async function runNpmInstallGlobal(installSpec: string): Promise<boolean> {
         resolve(true);
         return;
       }
-      process.stderr.write(`npm install exited with code ${code ?? "unknown"}.\n`);
+      process.stderr.write(
+        `npm install exited with code ${code ?? "unknown"}.\n`,
+      );
       resolve(false);
     });
   });
 }
 
-async function fetchLatestNpmVersion(packageName: string): Promise<string | null> {
+async function fetchLatestNpmVersion(
+  packageName: string,
+): Promise<string | null> {
   // Try Tencent mirror first for faster access in mainland China.
-  const mirrorResult = await runNpmViewLatestVersion(packageName, TENCENT_MIRROR_REGISTRY, NPM_VIEW_TIMEOUT_MS);
+  const mirrorResult = await runNpmViewLatestVersion(
+    packageName,
+    TENCENT_MIRROR_REGISTRY,
+    NPM_VIEW_TIMEOUT_MS,
+  );
   if (mirrorResult.ok) {
     return parseNpmViewVersion(mirrorResult.stdout);
   }
 
   // Fall back to the official npm registry.
-  const result = await runNpmViewLatestVersion(packageName, undefined, NPM_VIEW_TIMEOUT_MS);
+  const result = await runNpmViewLatestVersion(
+    packageName,
+    undefined,
+    NPM_VIEW_TIMEOUT_MS,
+  );
   if (!result.ok) {
     return null;
   }
@@ -198,7 +219,7 @@ async function fetchLatestNpmVersion(packageName: string): Promise<string | null
 function runNpmViewLatestVersion(
   packageName: string,
   registry: string | undefined,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<{ ok: true; stdout: string } | { ok: false }> {
   return new Promise((resolve) => {
     const args = ["view", packageName, "dist-tags.latest", "--json"];
@@ -212,7 +233,9 @@ function runNpmViewLatestVersion(
 
     let stdout = "";
     let settled = false;
-    const finish = (result: { ok: true; stdout: string } | { ok: false }): void => {
+    const finish = (
+      result: { ok: true; stdout: string } | { ok: false },
+    ): void => {
       if (settled) {
         return;
       }
@@ -260,12 +283,15 @@ function readUpdateState(): UpdateState {
     return {};
   }
   try {
-    const parsed = JSON.parse(fs.readFileSync(statePath, "utf8")) as UpdateState;
+    const parsed = JSON.parse(
+      fs.readFileSync(statePath, "utf8"),
+    ) as UpdateState;
     return {
       pending: parsed.pending ?? null,
       ignoredVersions: Array.isArray(parsed.ignoredVersions)
         ? parsed.ignoredVersions.filter(
-            (value): value is string => typeof value === "string" && value.trim().length > 0
+            (value): value is string =>
+              typeof value === "string" && value.trim().length > 0,
           )
         : [],
     };

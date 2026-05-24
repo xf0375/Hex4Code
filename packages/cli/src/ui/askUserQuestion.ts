@@ -21,7 +21,7 @@ export type AskUserQuestionAnswers = Record<string, string>;
 
 export function findPendingAskUserQuestion(
   messages: SessionMessage[],
-  status: SessionStatus | null
+  status: SessionStatus | null,
 ): PendingAskUserQuestion | null {
   if (status !== "waiting_for_user") {
     return null;
@@ -46,9 +46,14 @@ export function findPendingAskUserQuestion(
   return null;
 }
 
-export function formatAskUserQuestionAnswers(answers: AskUserQuestionAnswers): string {
+export function formatAskUserQuestionAnswers(
+  answers: AskUserQuestionAnswers,
+): string {
   const answersText = Object.entries(answers)
-    .map(([question, answer]) => `"${escapeAnswerPart(question)}"="${escapeAnswerPart(answer)}"`)
+    .map(
+      ([question, answer]) =>
+        `"${escapeAnswerPart(question)}"="${escapeAnswerPart(answer)}"`,
+    )
     .join(", ");
   return `User has answered your questions: ${answersText}. You can now continue with the user's answers in mind.`;
 }
@@ -57,17 +62,25 @@ export function formatAskUserQuestionDecline(): string {
   return "The user declined to answer the questions. Continue with the available context, or ask again if the information is required.";
 }
 
-function parseAskUserQuestionContent(content: string | null): AskUserQuestionItem[] {
+function parseAskUserQuestionContent(
+  content: string | null,
+): AskUserQuestionItem[] {
   if (!content) {
     return [];
   }
 
   try {
-    const parsed = JSON.parse(content) as { awaitUserResponse?: unknown; metadata?: unknown };
+    const parsed = JSON.parse(content) as {
+      awaitUserResponse?: unknown;
+      metadata?: unknown;
+    };
     if (parsed.awaitUserResponse !== true) {
       return [];
     }
-    const metadata = parsed.metadata as { kind?: unknown; questions?: unknown } | null;
+    const metadata = parsed.metadata as {
+      kind?: unknown;
+      questions?: unknown;
+    } | null;
     if (!metadata || metadata.kind !== "ask_user_question") {
       return [];
     }
@@ -114,7 +127,10 @@ function normalizeOption(raw: unknown): AskUserQuestionOption | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return null;
   }
-  const label = typeof (raw as { label?: unknown }).label === "string" ? (raw as { label: string }).label.trim() : "";
+  const label =
+    typeof (raw as { label?: unknown }).label === "string"
+      ? (raw as { label: string }).label.trim()
+      : "";
   if (!label) {
     return null;
   }
@@ -129,5 +145,9 @@ function normalizeOption(raw: unknown): AskUserQuestionOption | null {
 }
 
 function escapeAnswerPart(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\s+/g, " ").trim();
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\s+/g, " ")
+    .trim();
 }

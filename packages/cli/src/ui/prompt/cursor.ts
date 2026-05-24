@@ -9,7 +9,7 @@ type CursorPlacement = {
 type WriteFn = (
   chunk: string | Uint8Array,
   encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-  callback?: (error?: Error | null) => void
+  callback?: (error?: Error | null) => void,
 ) => boolean;
 
 function cursorUp(rows: number): string {
@@ -52,7 +52,7 @@ export function getPromptCursorPlacement(
   state: PromptBufferState,
   screenWidth: number,
   prefixWidth: number,
-  footerText: string
+  footerText: string,
 ): CursorPlacement {
   const width = Math.max(1, screenWidth);
   const cursor = Math.max(0, Math.min(state.cursor, state.text.length));
@@ -74,11 +74,19 @@ export function getPromptCursorPlacement(
   };
 }
 
-function measureTextRows(text: string, width: number, initialColumn: number): number {
+function measureTextRows(
+  text: string,
+  width: number,
+  initialColumn: number,
+): number {
   return measureTextPosition(text, width, initialColumn).row + 1;
 }
 
-function measureTextPosition(text: string, width: number, initialColumn: number): { row: number; column: number } {
+function measureTextPosition(
+  text: string,
+  width: number,
+  initialColumn: number,
+): { row: number; column: number } {
   let row = 0;
   let column = Math.min(initialColumn, width - 1);
 
@@ -114,7 +122,11 @@ function textWidth(value: string): number {
 
 function characterWidth(char: string): number {
   const codePoint = char.codePointAt(0) ?? 0;
-  if (codePoint === 0 || codePoint < 32 || (codePoint >= 0x7f && codePoint < 0xa0)) {
+  if (
+    codePoint === 0 ||
+    codePoint < 32 ||
+    (codePoint >= 0x7f && codePoint < 0xa0)
+  ) {
     return 0;
   }
   if (codePoint >= 0x300 && codePoint <= 0x36f) {
@@ -138,7 +150,7 @@ function characterWidth(char: string): number {
 export function usePromptTerminalCursor(
   stdout: NodeJS.WriteStream | undefined,
   placement: CursorPlacement,
-  isActive: boolean
+  isActive: boolean,
 ): void {
   const directWriteRef = useRef<((data: string) => void) | null>(null);
   const activePlacementRef = useRef<CursorPlacement | null>(null);
@@ -174,7 +186,9 @@ export function usePromptTerminalCursor(
         const latest = directWriteRef.current;
         const p = lastPlacementRef.current;
         if (latest && p) {
-          latest(showCursor() + cursorUp(p.rowsUp) + "\r" + cursorForward(p.column));
+          latest(
+            showCursor() + cursorUp(p.rowsUp) + "\r" + cursorForward(p.column),
+          );
           activePlacementRef.current = p;
         }
       });
@@ -205,7 +219,12 @@ export function usePromptTerminalCursor(
       return;
     }
 
-    directWrite(showCursor() + cursorUp(placement.rowsUp) + "\r" + cursorForward(placement.column));
+    directWrite(
+      showCursor() +
+        cursorUp(placement.rowsUp) +
+        "\r" +
+        cursorForward(placement.column),
+    );
     activePlacementRef.current = placement;
     lastPlacementRef.current = placement;
 
@@ -222,7 +241,10 @@ export function usePromptTerminalCursor(
   }, [isActive, placement, stdout]);
 }
 
-export function useHiddenTerminalCursor(stdout: NodeJS.WriteStream | undefined, isActive: boolean): void {
+export function useHiddenTerminalCursor(
+  stdout: NodeJS.WriteStream | undefined,
+  isActive: boolean,
+): void {
   useLayoutEffect(() => {
     if (!isActive || !stdout?.isTTY) {
       return;
@@ -235,7 +257,10 @@ export function useHiddenTerminalCursor(stdout: NodeJS.WriteStream | undefined, 
   }, [isActive, stdout]);
 }
 
-export function useTerminalFocusReporting(stdout: NodeJS.WriteStream | undefined, isActive: boolean): void {
+export function useTerminalFocusReporting(
+  stdout: NodeJS.WriteStream | undefined,
+  isActive: boolean,
+): void {
   useLayoutEffect(() => {
     if (!isActive || !stdout?.isTTY) {
       return;
@@ -248,7 +273,10 @@ export function useTerminalFocusReporting(stdout: NodeJS.WriteStream | undefined
   }, [isActive, stdout]);
 }
 
-export function useTerminalExtendedKeys(stdout: NodeJS.WriteStream | undefined, isActive: boolean): void {
+export function useTerminalExtendedKeys(
+  stdout: NodeJS.WriteStream | undefined,
+  isActive: boolean,
+): void {
   useLayoutEffect(() => {
     if (!isActive || !stdout?.isTTY) {
       return;

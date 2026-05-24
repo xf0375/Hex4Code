@@ -9,7 +9,11 @@ type Props = {
   width?: number;
 };
 
-export function MessageView({ message, collapsed, width = 80 }: Props): React.ReactElement | null {
+export function MessageView({
+  message,
+  collapsed,
+  width = 80,
+}: Props): React.ReactElement | null {
   if (!message.visible) {
     return null;
   }
@@ -17,13 +21,21 @@ export function MessageView({ message, collapsed, width = 80 }: Props): React.Re
   if (message.role === "user") {
     const text = message.content || "(no content)";
     return (
-      <Box marginLeft={1} marginBottom={1} flexDirection="row" marginY={0} flexGrow={1} gap={1}>
+      <Box
+        marginLeft={1}
+        marginBottom={1}
+        flexDirection="row"
+        marginY={0}
+        flexGrow={1}
+        gap={1}
+      >
         <Box>
           <Text color="#229ac3">{`>`}</Text>
         </Box>
         <Box flexGrow={1}>
           <Text color="#229ac3">{text}</Text>
-          {Array.isArray(message.contentParams) && message.contentParams.length > 0 ? (
+          {Array.isArray(message.contentParams) &&
+          message.contentParams.length > 0 ? (
             <Text color="#229ac3">{`  📎 ${message.contentParams.length} image attachment(s)`}</Text>
           ) : null}
         </Box>
@@ -58,7 +70,14 @@ export function MessageView({ message, collapsed, width = 80 }: Props): React.Re
     const contentWidth = Math.max(1, width - 4);
 
     return (
-      <Box marginLeft={1} marginBottom={1} width={containerWidth} gap={1} marginY={0} flexDirection="row">
+      <Box
+        marginLeft={1}
+        marginBottom={1}
+        width={containerWidth}
+        gap={1}
+        marginY={0}
+        flexDirection="row"
+      >
         <Box alignSelf="stretch">
           <Text color="#229ac3">✦</Text>
         </Box>
@@ -88,7 +107,14 @@ export function MessageView({ message, collapsed, width = 80 }: Props): React.Re
     // Render model change messages in the same style as user commands.
     if (message.meta?.isModelChange) {
       return (
-        <Box marginY={0} marginLeft={1} marginBottom={1} flexGrow={1} flexDirection="row" gap={1}>
+        <Box
+          marginY={0}
+          marginLeft={1}
+          marginBottom={1}
+          flexGrow={1}
+          flexDirection="row"
+          gap={1}
+        >
           <Box>
             <Text color="#229ac3">{`>`}</Text>
           </Box>
@@ -102,7 +128,9 @@ export function MessageView({ message, collapsed, width = 80 }: Props): React.Re
     if (message.meta?.skill) {
       return (
         <Box marginY={0} marginLeft={1} marginBottom={1}>
-          <Text color="magenta">⚡ Loaded skill: {message.meta.skill.name}</Text>
+          <Text color="magenta">
+            ⚡ Loaded skill: {message.meta.skill.name}
+          </Text>
         </Box>
       );
     }
@@ -167,7 +195,8 @@ type DiffPreviewLine = {
 function buildToolSummary(message: SessionMessage): ToolSummary {
   const payload = parseToolPayload(message.content);
   const metaFunctionName =
-    message.meta?.function && typeof (message.meta.function as { name?: unknown }).name === "string"
+    message.meta?.function &&
+    typeof (message.meta.function as { name?: unknown }).name === "string"
       ? (message.meta.function as { name: string }).name
       : null;
   const name = payload.name || metaFunctionName || "tool";
@@ -185,7 +214,9 @@ function buildToolSummary(message: SessionMessage): ToolSummary {
 }
 
 function getMetaParams(message: SessionMessage): string {
-  return typeof message.meta?.paramsMd === "string" ? message.meta.paramsMd.trim() : "";
+  return typeof message.meta?.paramsMd === "string"
+    ? message.meta.paramsMd.trim()
+    : "";
 }
 
 function extractAskUserQuestionParams(message: SessionMessage): string {
@@ -217,7 +248,9 @@ function extractQuestionsFromToolFunction(toolFunction: unknown): string {
   }
   try {
     const parsed = JSON.parse(args);
-    return extractQuestionsFromValue((parsed as { questions?: unknown })?.questions);
+    return extractQuestionsFromValue(
+      (parsed as { questions?: unknown })?.questions,
+    );
   } catch {
     return "";
   }
@@ -250,9 +283,16 @@ function parseToolPayload(content: string | null): {
   }
 
   try {
-    const parsed = JSON.parse(content) as { name?: unknown; ok?: unknown; metadata?: unknown };
+    const parsed = JSON.parse(content) as {
+      name?: unknown;
+      ok?: unknown;
+      metadata?: unknown;
+    };
     return {
-      name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name.trim() : null,
+      name:
+        typeof parsed.name === "string" && parsed.name.trim()
+          ? parsed.name.trim()
+          : null,
       ok: parsed.ok !== false,
       metadata: isPlainRecord(parsed.metadata) ? parsed.metadata : null,
     };
@@ -275,7 +315,13 @@ function getToolDiffPreviewLines(summary: ToolSummary): DiffPreviewLine[] {
 export function parseDiffPreview(diffPreview: string): DiffPreviewLine[] {
   return diffPreview
     .split("\n")
-    .filter((line) => line && !line.startsWith("--- ") && !line.startsWith("+++ ") && !line.startsWith("@@ "))
+    .filter(
+      (line) =>
+        line &&
+        !line.startsWith("--- ") &&
+        !line.startsWith("+++ ") &&
+        !line.startsWith("@@ "),
+    )
     .map((line) => {
       if (line.startsWith("+")) {
         return { marker: "+", content: line.slice(1), kind: "added" };
@@ -291,17 +337,40 @@ export function parseDiffPreview(diffPreview: string): DiffPreviewLine[] {
     });
 }
 
-function DiffPreview({ lines }: { lines: DiffPreviewLine[] }): React.ReactElement {
+function DiffPreview({
+  lines,
+}: {
+  lines: DiffPreviewLine[];
+}): React.ReactElement {
   return (
     <Box flexDirection="column" marginLeft={2}>
       <Text dimColor>└ Changes</Text>
       <Box flexDirection="column" marginLeft={2}>
         {lines.map((line, index) => (
-          <Text key={`${index}-${line.marker}-${line.content}`} wrap="truncate-end">
-            <Text color={line.kind === "added" ? "green" : line.kind === "removed" ? "red" : "gray"}>
+          <Text
+            key={`${index}-${line.marker}-${line.content}`}
+            wrap="truncate-end"
+          >
+            <Text
+              color={
+                line.kind === "added"
+                  ? "green"
+                  : line.kind === "removed"
+                    ? "red"
+                    : "gray"
+              }
+            >
               {line.marker}
             </Text>
-            <Text color={line.kind === "added" ? "green" : line.kind === "removed" ? "red" : undefined}>
+            <Text
+              color={
+                line.kind === "added"
+                  ? "green"
+                  : line.kind === "removed"
+                    ? "red"
+                    : undefined
+              }
+            >
               {line.content}
             </Text>
           </Text>
@@ -336,7 +405,10 @@ function firstNonEmptyLine(value: string): string {
   return "";
 }
 
-function buildThinkingSummary(content: string, messageParams: unknown | null): string {
+function buildThinkingSummary(
+  content: string,
+  messageParams: unknown | null,
+): string {
   if (content) {
     const normalized = content.replace(/\r?\n/g, " ").replace(/\s+/g, " ");
     let result = truncate(normalized, 100);
@@ -346,8 +418,14 @@ function buildThinkingSummary(content: string, messageParams: unknown | null): s
     return result;
   }
 
-  const params = messageParams as { reasoning_content?: unknown } | null | undefined;
-  if (typeof params?.reasoning_content === "string" && params.reasoning_content.trim()) {
+  const params = messageParams as
+    | { reasoning_content?: unknown }
+    | null
+    | undefined;
+  if (
+    typeof params?.reasoning_content === "string" &&
+    params.reasoning_content.trim()
+  ) {
     return "(reasoning...)";
   }
 

@@ -36,12 +36,17 @@ export function buildLoadingText(input: LoadingTextInput): string {
   return `Thinking... (${elapsedSeconds}s) · ↓ ${tokens} tokens`;
 }
 
-function buildProcessLoadingText(processes: RunningProcesses | undefined, now: number): string | null {
+function buildProcessLoadingText(
+  processes: RunningProcesses | undefined,
+  now: number,
+): string | null {
   if (!processes || processes.size === 0) {
     return null;
   }
 
-  const first = processes.values().next().value as { startTime: string; command: string } | undefined;
+  const first = processes.values().next().value as
+    | { startTime: string; command: string }
+    | undefined;
   if (!first) {
     return null;
   }

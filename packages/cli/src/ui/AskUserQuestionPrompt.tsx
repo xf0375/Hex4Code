@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Text } from "ink";
-import type { AskUserQuestionAnswers, AskUserQuestionItem } from "./askUserQuestion";
+import type {
+  AskUserQuestionAnswers,
+  AskUserQuestionItem,
+} from "./askUserQuestion";
 import { useTerminalInput } from "./PromptInput";
 
 type Props = {
@@ -18,11 +21,17 @@ type OptionEntry = {
   isOther?: boolean;
 };
 
-export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props): React.ReactElement | null {
+export function AskUserQuestionPrompt({
+  questions,
+  onSubmit,
+  onCancel,
+}: Props): React.ReactElement | null {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [cursorIndex, setCursorIndex] = useState(0);
   const [answers, setAnswers] = useState<AskUserQuestionAnswers>({});
-  const [selectedValues, setSelectedValues] = useState<Record<number, string[]>>({});
+  const [selectedValues, setSelectedValues] = useState<
+    Record<number, string[]>
+  >({});
   const [otherTexts, setOtherTexts] = useState<Record<number, string>>({});
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -93,7 +102,13 @@ export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props):
       return;
     }
 
-    if (isCurrentOther && input && !key.ctrl && !key.meta && !input.startsWith("\u001B")) {
+    if (
+      isCurrentOther &&
+      input &&
+      !key.ctrl &&
+      !key.meta &&
+      !input.startsWith("\u001B")
+    ) {
       const sanitized = input.replace(/\r/g, "");
       if (sanitized) {
         setOtherTexts((prev) => ({
@@ -131,18 +146,25 @@ export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props):
   function toggleOption(value: string): void {
     setSelectedValues((prev) => {
       const current = prev[questionIndex] ?? [];
-      const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
       return { ...prev, [questionIndex]: next };
     });
   }
 
   function commitCurrentQuestion(): void {
-    const answer = buildAnswerForQuestion(question, options[cursorIndex], selectedForQuestion, otherText);
+    const answer = buildAnswerForQuestion(
+      question,
+      options[cursorIndex],
+      selectedForQuestion,
+      otherText,
+    );
     if (!answer) {
       setStatusMessage(
         question.multiSelect
           ? "Select at least one option with Space, or type an Other answer."
-          : "Select an option, or type an Other answer."
+          : "Select an option, or type an Other answer.",
       );
       return;
     }
@@ -163,7 +185,13 @@ export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props):
   }
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1} marginY={1}>
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor="yellow"
+      paddingX={1}
+      marginY={1}
+    >
       <Box marginBottom={1}>
         <Text color="yellow" bold>
           Answer questions
@@ -178,9 +206,17 @@ export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props):
         {options.map((option, index) => {
           const isCursor = index === cursorIndex;
           const isSelected = option.isOther
-            ? selectedForQuestion.includes(OTHER_VALUE) || Boolean(otherText.trim())
-            : selectedForQuestion.includes(option.value) || answers[question.question] === option.label;
-          const marker = question.multiSelect ? (isSelected ? "[x]" : "[ ]") : isSelected ? "●" : "○";
+            ? selectedForQuestion.includes(OTHER_VALUE) ||
+              Boolean(otherText.trim())
+            : selectedForQuestion.includes(option.value) ||
+              answers[question.question] === option.label;
+          const marker = question.multiSelect
+            ? isSelected
+              ? "[x]"
+              : "[ ]"
+            : isSelected
+              ? "●"
+              : "○";
           return (
             <Box key={option.value} flexDirection="column">
               <Text color={isCursor ? "cyanBright" : undefined}>
@@ -202,11 +238,17 @@ export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props):
                       {isCursor ? <Text color="cyanBright">▌</Text> : null}
                     </Text>
                   ) : (
-                    <Text dimColor>{isCursor ? "type your answer here" : "type a custom answer"}</Text>
+                    <Text dimColor>
+                      {isCursor
+                        ? "type your answer here"
+                        : "type a custom answer"}
+                    </Text>
                   )}
                 </Box>
               ) : null}
-              {option.description ? <Text dimColor> {option.description}</Text> : null}
+              {option.description ? (
+                <Text dimColor> {option.description}</Text>
+              ) : null}
             </Box>
           );
         })}
@@ -225,7 +267,9 @@ export function AskUserQuestionPrompt({ questions, onSubmit, onCancel }: Props):
   );
 }
 
-function buildOptions(question: AskUserQuestionItem | undefined): OptionEntry[] {
+function buildOptions(
+  question: AskUserQuestionItem | undefined,
+): OptionEntry[] {
   if (!question) {
     return [];
   }
@@ -247,7 +291,7 @@ function buildAnswerForQuestion(
   question: AskUserQuestionItem,
   focusedOption: OptionEntry | undefined,
   selectedValues: string[],
-  otherText: string
+  otherText: string,
 ): string | null {
   const trimmedOther = otherText.trim();
   if (question.multiSelect) {

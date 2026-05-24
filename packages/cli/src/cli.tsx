@@ -1,7 +1,11 @@
 import { render } from "ink";
 import { App } from "./ui";
 import { setShellIfWindows } from "@hex4/core/common/shell-utils";
-import { checkForNpmUpdate, promptForPendingUpdate, type PackageInfo } from "./updateCheck";
+import {
+  checkForNpmUpdate,
+  promptForPendingUpdate,
+  type PackageInfo,
+} from "./updateCheck";
 
 const args = process.argv.slice(2);
 const packageInfo = readPackageInfo();
@@ -43,7 +47,7 @@ if (args.includes("--help") || args.includes("-h")) {
       "  /resume          Pick a previous conversation to continue",
       "  /exit            Quit",
       "  ctrl+d twice     Quit",
-    ].join("\n") + "\n"
+    ].join("\n") + "\n",
   );
   process.exit(0);
 }
@@ -52,7 +56,10 @@ const projectRoot = process.cwd();
 configureWindowsShell();
 
 if (!process.stdin.isTTY) {
-  process.stderr.write("hex4 requires an interactive terminal (TTY). " + "Re-run from a real terminal session.\n");
+  process.stderr.write(
+    "hex4 requires an interactive terminal (TTY). " +
+      "Re-run from a real terminal session.\n",
+  );
   process.exit(1);
 }
 
@@ -66,8 +73,12 @@ async function main(): Promise<void> {
   function startApp(): void {
     let restarting = false;
     const inkInstance = render(
-      <App projectRoot={projectRoot} version={packageInfo.version} onRestart={() => restartRef.current?.()} />,
-      { exitOnCtrlC: false }
+      <App
+        projectRoot={projectRoot}
+        version={packageInfo.version}
+        onRestart={() => restartRef.current?.()}
+      />,
+      { exitOnCtrlC: false },
     );
 
     restartRef.current = () => {
@@ -105,7 +116,10 @@ function configureWindowsShell(): void {
 
 function readPackageInfo(): PackageInfo {
   try {
-    const pkg = require("../package.json") as { name?: unknown; version?: unknown };
+    const pkg = require("../package.json") as {
+      name?: unknown;
+      version?: unknown;
+    };
     return {
       // @ts-ignore
       name: typeof pkg.name === "string" ? pkg.name : "@hex4code/cli",

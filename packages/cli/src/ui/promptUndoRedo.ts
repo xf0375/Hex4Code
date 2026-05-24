@@ -13,9 +13,12 @@ export function recordPromptEdit(
   history: PromptUndoRedoState,
   current: PromptBufferState,
   next: PromptBufferState,
-  maxUndoEntries = 1000
+  maxUndoEntries = 1000,
 ): void {
-  if (next.text === current.text || next.text === history.undoStack.at(-1)?.text) {
+  if (
+    next.text === current.text ||
+    next.text === history.undoStack.at(-1)?.text
+  ) {
     return;
   }
 
@@ -26,7 +29,10 @@ export function recordPromptEdit(
   history.redoStack = [];
 }
 
-export function undoPromptEdit(history: PromptUndoRedoState, current: PromptBufferState): PromptBufferState | null {
+export function undoPromptEdit(
+  history: PromptUndoRedoState,
+  current: PromptBufferState,
+): PromptBufferState | null {
   const previous = history.undoStack.pop();
   if (!previous) {
     return null;
@@ -36,7 +42,10 @@ export function undoPromptEdit(history: PromptUndoRedoState, current: PromptBuff
   return previous;
 }
 
-export function redoPromptEdit(history: PromptUndoRedoState, current: PromptBufferState): PromptBufferState | null {
+export function redoPromptEdit(
+  history: PromptUndoRedoState,
+  current: PromptBufferState,
+): PromptBufferState | null {
   const next = history.redoStack.pop();
   if (!next) {
     return null;

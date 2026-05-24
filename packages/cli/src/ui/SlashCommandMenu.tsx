@@ -1,4 +1,7 @@
-import { formatSlashCommandDescription, formatSlashCommandLabel } from "./slashCommands";
+import {
+  formatSlashCommandDescription,
+  formatSlashCommandLabel,
+} from "./slashCommands";
 import type { SlashCommandItem } from "./slashCommands";
 import React from "react";
 import { Box, Text } from "ink";
@@ -34,7 +37,7 @@ const SlashCommandMenu = React.memo(function SlashCommandMenu({
   // 计算可见窗口起始位置，确保 activeIndex 始终在可见区域内
   const visibleStart = Math.min(
     Math.max(0, activeIndex - Math.floor((maxVisible - 1) / 2)),
-    Math.max(0, items.length - maxVisible)
+    Math.max(0, items.length - maxVisible),
   );
   const visibleItems = items.slice(visibleStart, visibleStart + maxVisible);
 
@@ -50,13 +53,20 @@ const SlashCommandMenu = React.memo(function SlashCommandMenu({
         return (
           <Box key={item.label} gap={2} flexDirection="row" flexGrow={1}>
             <Box width={labelColumnWidth} flexShrink={0}>
-              <Text color={actualIndex === activeIndex ? "#229ac3" : undefined} wrap="truncate-end">
+              <Text
+                color={actualIndex === activeIndex ? "#229ac3" : undefined}
+                wrap="truncate-end"
+              >
                 {actualIndex === activeIndex ? "› " : "  "}
                 <Text bold>{formatSlashCommandLabel(item)}</Text>
               </Text>
             </Box>
             <Box flexGrow={1}>
-              <Text color={actualIndex === activeIndex ? "#229ac3" : undefined} wrap="truncate-end" dimColor>
+              <Text
+                color={actualIndex === activeIndex ? "#229ac3" : undefined}
+                wrap="truncate-end"
+                dimColor
+              >
                 {formatSlashCommandDescription(item.description)}
               </Text>
             </Box>
@@ -64,7 +74,9 @@ const SlashCommandMenu = React.memo(function SlashCommandMenu({
         );
       })}
       <Box marginLeft={2} flexDirection="column">
-        {visibleStart + visibleItems.length < items.length ? <Text dimColor>▼</Text> : null}
+        {visibleStart + visibleItems.length < items.length ? (
+          <Text dimColor>▼</Text>
+        ) : null}
         <Text dimColor>
           ({activeIndex + 1}/{items.length}) ↑↓ to navigate · Enter to select
         </Text>

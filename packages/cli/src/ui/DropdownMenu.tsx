@@ -50,8 +50,15 @@ type DropdownMenuProps = {
  * Calculate the visible window start position for scrolling
  * Ensures the activeIndex is always visible within the window
  */
-export function calculateVisibleStart(activeIndex: number, totalItems: number, maxVisible: number): number {
-  return Math.min(Math.max(0, activeIndex - Math.floor((maxVisible - 1) / 2)), Math.max(0, totalItems - maxVisible));
+export function calculateVisibleStart(
+  activeIndex: number,
+  totalItems: number,
+  maxVisible: number,
+): number {
+  return Math.min(
+    Math.max(0, activeIndex - Math.floor((maxVisible - 1) / 2)),
+    Math.max(0, totalItems - maxVisible),
+  );
 }
 
 /**
@@ -71,7 +78,11 @@ const DropdownMenu = React.memo(function DropdownMenu({
   renderItem,
 }: DropdownMenuProps): React.ReactElement | null {
   // Calculate visible window
-  const visibleStart = calculateVisibleStart(activeIndex, items?.length, maxVisible);
+  const visibleStart = calculateVisibleStart(
+    activeIndex,
+    items?.length,
+    maxVisible,
+  );
   const visibleItems = items?.slice(visibleStart, visibleStart + maxVisible);
 
   // 计算标签列最佳宽度：包含所有可能的前缀和后缀
@@ -91,7 +102,7 @@ const DropdownMenu = React.memo(function DropdownMenu({
           width += 2; // " ✓" or similar
         }
         return width;
-      })
+      }),
     );
     const maxAllowed = Math.max(10, (width - 2) >> 1); // 容器50%宽度（减去gap），至少保留10列
     return Math.min(maxContentWidth, maxAllowed);
@@ -113,7 +124,13 @@ const DropdownMenu = React.memo(function DropdownMenu({
   }
 
   return (
-    <Box flexDirection="column" marginBottom={1} borderStyle={"round"} borderDimColor width={width}>
+    <Box
+      flexDirection="column"
+      marginBottom={1}
+      borderStyle={"round"}
+      borderDimColor
+      width={width}
+    >
       {/* Title */}
       {title ? (
         <Box
@@ -144,22 +161,41 @@ const DropdownMenu = React.memo(function DropdownMenu({
 
         // Use custom renderer if provided
         if (renderItem) {
-          return <React.Fragment key={item.key}>{renderItem(item, isActive)}</React.Fragment>;
+          return (
+            <React.Fragment key={item.key}>
+              {renderItem(item, isActive)}
+            </React.Fragment>
+          );
         }
 
         // Default rendering with selection indicator and optional features
         return (
           <Box key={item.key} flexGrow={1} flexDirection="row" gap={2}>
             <Box width={labelColumnWidth} flexShrink={0}>
-              <Text color={isActive ? activeColor : undefined} wrap="truncate-end">
+              <Text
+                color={isActive ? activeColor : undefined}
+                wrap="truncate-end"
+              >
                 {isActive ? "› " : "  "}
-                {item.selected !== undefined ? (item.selected ? "●" : "○") : null} <Text bold>{item.label}</Text>
+                {item.selected !== undefined
+                  ? item.selected
+                    ? "●"
+                    : "○"
+                  : null}{" "}
+                <Text bold>{item.label}</Text>
                 {item.statusIndicator ? (
-                  <Text color={item.statusIndicator.color}> {item.statusIndicator.symbol}</Text>
+                  <Text color={item.statusIndicator.color}>
+                    {" "}
+                    {item.statusIndicator.symbol}
+                  </Text>
                 ) : null}
               </Text>
             </Box>
-            <Box flexGrow={1}>{item.description ? <Text dimColor>{`${item.description}`}</Text> : null}</Box>
+            <Box flexGrow={1}>
+              {item.description ? (
+                <Text dimColor>{`${item.description}`}</Text>
+              ) : null}
+            </Box>
           </Box>
         );
       })}
@@ -167,7 +203,9 @@ const DropdownMenu = React.memo(function DropdownMenu({
       {/* Scroll indicator - bottom */}
       {visibleStart + visibleItems.length < items.length ? (
         <Box marginLeft={2}>
-          <Text dimColor>… {items.length - visibleStart - visibleItems.length} more</Text>
+          <Text dimColor>
+            … {items.length - visibleStart - visibleItems.length} more
+          </Text>
         </Box>
       ) : null}
 

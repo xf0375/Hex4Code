@@ -4,7 +4,11 @@ import * as os from "node:os";
 import path from "node:path";
 import type { SkillInfo } from "@hex4/core/session";
 import type { ResolvedHex4codeSettings } from "@hex4/core/settings";
-import { buildSlashCommands, BUILTIN_SLASH_COMMANDS, formatSlashCommandDescription } from "./slashCommands";
+import {
+  buildSlashCommands,
+  BUILTIN_SLASH_COMMANDS,
+  formatSlashCommandDescription,
+} from "./slashCommands";
 import { ThemedGradient } from "./ThemedGradient";
 import { AsciiLogo } from "../AsciiArt";
 
@@ -47,7 +51,10 @@ export function WelcomeScreen({
       <Box flexDirection="column" width={panelWidth}>
         <Box flexDirection="column" paddingX={1}>
           <Box flexDirection="column" justifyContent="center" paddingX={1}>
-            <Box justifyContent="center" width={compact ? undefined : TITLE_PANEL_WIDTH}>
+            <Box
+              justifyContent="center"
+              width={compact ? undefined : TITLE_PANEL_WIDTH}
+            >
               <ThemedGradient>{AsciiLogo}</ThemedGradient>
             </Box>
           </Box>
@@ -67,8 +74,14 @@ export function WelcomeScreen({
             </Box>
             {!compact ? <Text> </Text> : null}
             <SettingRow label="Model" value={settings.model} />
-            <SettingRow label="Thinking Enabled" value={String(settings.thinkingEnabled)} />
-            <SettingRow label="Reasoning Effort" value={settings.thinkingEnabled ? settings.reasoningEffort : "-"} />
+            <SettingRow
+              label="Thinking Enabled"
+              value={String(settings.thinkingEnabled)}
+            />
+            <SettingRow
+              label="Reasoning Effort"
+              value={settings.thinkingEnabled ? settings.reasoningEffort : "-"}
+            />
             <SettingRow label="CWD" value={cwd} />
           </Box>
         </Box>
@@ -87,7 +100,13 @@ export function WelcomeScreen({
   );
 }
 
-function SettingRow({ label, value }: { label: string; value: string }): React.ReactElement {
+function SettingRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}): React.ReactElement {
   return (
     <Box flexDirection="row">
       <Box width={20}>
@@ -100,7 +119,10 @@ function SettingRow({ label, value }: { label: string; value: string }): React.R
   );
 }
 
-export function formatHomeRelativePath(value: string, home = os.homedir()): string {
+export function formatHomeRelativePath(
+  value: string,
+  home = os.homedir(),
+): string {
   const normalizedValue = path.resolve(value);
   const normalizedHome = path.resolve(home);
   const relative = path.relative(normalizedHome, normalizedValue);
@@ -114,7 +136,9 @@ export function formatHomeRelativePath(value: string, home = os.homedir()): stri
   return normalizedValue;
 }
 
-export function buildWelcomeTips(skills: SkillInfo[]): Array<{ label: string; description: string }> {
+export function buildWelcomeTips(
+  skills: SkillInfo[],
+): Array<{ label: string; description: string }> {
   const slashTips = buildSlashCommands(skills)
     .filter((item) => item.kind !== "skill" || item.skill?.isLoaded)
     .map((item) => ({
@@ -124,7 +148,10 @@ export function buildWelcomeTips(skills: SkillInfo[]): Array<{ label: string; de
 
   return [
     ...slashTips,
-    ...SHORTCUT_TIPS.filter((tip) => !BUILTIN_SLASH_COMMANDS.some((command) => command.label === tip.label)),
+    ...SHORTCUT_TIPS.filter(
+      (tip) =>
+        !BUILTIN_SLASH_COMMANDS.some((command) => command.label === tip.label),
+    ),
   ];
 }
 

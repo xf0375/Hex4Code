@@ -5,11 +5,15 @@ export type PromptBufferState = {
 
 export const EMPTY_BUFFER: PromptBufferState = { text: "", cursor: 0 };
 
-export function insertText(state: PromptBufferState, value: string): PromptBufferState {
+export function insertText(
+  state: PromptBufferState,
+  value: string,
+): PromptBufferState {
   if (!value) {
     return state;
   }
-  const text = state.text.slice(0, state.cursor) + value + state.text.slice(state.cursor);
+  const text =
+    state.text.slice(0, state.cursor) + value + state.text.slice(state.cursor);
   return { text, cursor: state.cursor + value.length };
 }
 
@@ -17,7 +21,8 @@ export function backspace(state: PromptBufferState): PromptBufferState {
   if (state.cursor === 0) {
     return state;
   }
-  const text = state.text.slice(0, state.cursor - 1) + state.text.slice(state.cursor);
+  const text =
+    state.text.slice(0, state.cursor - 1) + state.text.slice(state.cursor);
   return { text, cursor: state.cursor - 1 };
 }
 
@@ -25,7 +30,8 @@ export function deleteForward(state: PromptBufferState): PromptBufferState {
   if (state.cursor >= state.text.length) {
     return state;
   }
-  const text = state.text.slice(0, state.cursor) + state.text.slice(state.cursor + 1);
+  const text =
+    state.text.slice(0, state.cursor) + state.text.slice(state.cursor + 1);
   return { text, cursor: state.cursor };
 }
 
@@ -71,7 +77,8 @@ export function moveUp(state: PromptBufferState): PromptBufferState {
     return { ...state, cursor: 0 };
   }
   const previousLineEnd = lineStart - 1;
-  const previousLineStart = state.text.lastIndexOf("\n", previousLineEnd - 1) + 1;
+  const previousLineStart =
+    state.text.lastIndexOf("\n", previousLineEnd - 1) + 1;
   const previousLineLength = previousLineEnd - previousLineStart;
   const targetColumn = Math.min(column, previousLineLength);
   return { ...state, cursor: previousLineStart + targetColumn };
@@ -84,7 +91,8 @@ export function moveDown(state: PromptBufferState): PromptBufferState {
   }
   const nextLineStart = lineEnd + 1;
   const nextLineNewline = state.text.indexOf("\n", nextLineStart);
-  const nextLineEnd = nextLineNewline === -1 ? state.text.length : nextLineNewline;
+  const nextLineEnd =
+    nextLineNewline === -1 ? state.text.length : nextLineNewline;
   const nextLineLength = nextLineEnd - nextLineStart;
   const targetColumn = Math.min(column, nextLineLength);
   return { ...state, cursor: nextLineStart + targetColumn };
@@ -182,7 +190,8 @@ function locate(state: PromptBufferState): {
   const lineNumber = before.split("\n").length - 1;
   const after = state.text.slice(state.cursor);
   const nextNewline = after.indexOf("\n");
-  const lineEnd = nextNewline === -1 ? state.text.length : state.cursor + nextNewline;
+  const lineEnd =
+    nextNewline === -1 ? state.text.length : state.cursor + nextNewline;
   return {
     line: lineNumber,
     column: state.cursor - lineStart,

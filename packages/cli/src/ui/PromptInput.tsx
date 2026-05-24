@@ -28,7 +28,11 @@ import {
   redoPromptEdit,
   undoPromptEdit,
 } from "./promptUndoRedo";
-import { buildSlashCommands, filterSlashCommands, findExactSlashCommand } from "./slashCommands";
+import {
+  buildSlashCommands,
+  filterSlashCommands,
+  findExactSlashCommand,
+} from "./slashCommands";
 import type { SlashCommandItem } from "./slashCommands";
 import { readClipboardImageAsync } from "./clipboard";
 import type { SkillInfo } from "@hex4/core/session";
@@ -39,9 +43,16 @@ export type { InputKey } from "./prompt";
 
 import { useTerminalInput } from "./prompt";
 import type { InputKey } from "./prompt";
-import { useHiddenTerminalCursor, useTerminalExtendedKeys, useTerminalFocusReporting } from "./prompt";
+import {
+  useHiddenTerminalCursor,
+  useTerminalExtendedKeys,
+  useTerminalFocusReporting,
+} from "./prompt";
 import SlashCommandMenu from "./SlashCommandMenu";
-import type { ModelConfigSelection, ReasoningEffort } from "@hex4/core/settings";
+import type {
+  ModelConfigSelection,
+  ReasoningEffort,
+} from "@hex4/core/settings";
 import DropdownMenu from "./DropdownMenu";
 
 export type PromptSubmission = {
@@ -61,12 +72,17 @@ type Props = {
   disabled?: boolean;
   placeholder?: string;
   onSubmit: (submission: PromptSubmission) => void;
-  onModelConfigChange: (selection: ModelConfigSelection) => string | Promise<string>;
+  onModelConfigChange: (
+    selection: ModelConfigSelection,
+  ) => string | Promise<string>;
   onInterrupt: () => void;
 };
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-export const MODEL_COMMAND_MODELS = ["deepseek-v4-pro", "deepseek-v4-flash"] as const;
+export const MODEL_COMMAND_MODELS = [
+  "deepseek-v4-pro",
+  "deepseek-v4-flash",
+] as const;
 
 type ThinkingModeOption = {
   label: string;
@@ -75,14 +91,26 @@ type ThinkingModeOption = {
 };
 
 export const MODEL_COMMAND_THINKING_OPTIONS: ThinkingModeOption[] = [
-  { label: "Thinking mode [max]", thinkingEnabled: true, reasoningEffort: "max" },
-  { label: "Thinking mode [high]", thinkingEnabled: true, reasoningEffort: "high" },
+  {
+    label: "Thinking mode [max]",
+    thinkingEnabled: true,
+    reasoningEffort: "max",
+  },
+  {
+    label: "Thinking mode [high]",
+    thinkingEnabled: true,
+    reasoningEffort: "high",
+  },
   { label: "No thinking", thinkingEnabled: false },
 ];
 
 type ModelDropdownStep = "model" | "thinking";
 
-const PromptPrefixLine = React.memo(function PromptPrefixLine({ busy }: { busy: boolean }): React.ReactElement {
+const PromptPrefixLine = React.memo(function PromptPrefixLine({
+  busy,
+}: {
+  busy: boolean;
+}): React.ReactElement {
   const [spinnerIndex, setSpinnerIndex] = useState(0);
 
   useEffect(() => {
@@ -123,11 +151,14 @@ export const PromptInput = React.memo(function PromptInput({
   const [menuIndex, setMenuIndex] = useState(0);
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [skillsDropdownIndex, setSkillsDropdownIndex] = useState(0);
-  const [modelDropdownStep, setModelDropdownStep] = useState<ModelDropdownStep | null>(null);
+  const [modelDropdownStep, setModelDropdownStep] =
+    useState<ModelDropdownStep | null>(null);
   const [modelDropdownIndex, setModelDropdownIndex] = useState(0);
   const [pendingModel, setPendingModel] = useState<string | null>(null);
   const [historyCursor, setHistoryCursor] = useState(-1);
-  const [draftBeforeHistory, setDraftBeforeHistory] = useState<string | null>(null);
+  const [draftBeforeHistory, setDraftBeforeHistory] = useState<string | null>(
+    null,
+  );
   const [hasTerminalFocus, setHasTerminalFocus] = useState(true);
   const lastCtrlDAt = React.useRef<number>(0);
   const undoRedoRef = React.useRef(createPromptUndoRedoState());
@@ -136,11 +167,18 @@ export const PromptInput = React.memo(function PromptInput({
   const slashToken = getCurrentSlashToken(buffer);
   const slashMenu = React.useMemo(
     () =>
-      showSkillsDropdown || modelDropdownStep ? [] : slashToken ? filterSlashCommands(slashItems, slashToken) : [],
-    [showSkillsDropdown, modelDropdownStep, slashToken, slashItems]
+      showSkillsDropdown || modelDropdownStep
+        ? []
+        : slashToken
+          ? filterSlashCommands(slashItems, slashToken)
+          : [],
+    [showSkillsDropdown, modelDropdownStep, slashToken, slashItems],
   );
   const showMenu = slashMenu.length > 0;
-  const promptHistoryKey = React.useMemo(() => promptHistory.join("\0"), [promptHistory]);
+  const promptHistoryKey = React.useMemo(
+    () => promptHistory.join("\0"),
+    [promptHistory],
+  );
   const footerText = statusMessage
     ? statusMessage
     : busy
@@ -173,7 +211,9 @@ export const PromptInput = React.memo(function PromptInput({
       return;
     }
     const optionCount =
-      modelDropdownStep === "model" ? MODEL_COMMAND_MODELS.length : MODEL_COMMAND_THINKING_OPTIONS.length;
+      modelDropdownStep === "model"
+        ? MODEL_COMMAND_MODELS.length
+        : MODEL_COMMAND_THINKING_OPTIONS.length;
     if (modelDropdownIndex >= optionCount) {
       setModelDropdownIndex(Math.max(0, optionCount - 1));
     }
@@ -265,14 +305,19 @@ export const PromptInput = React.memo(function PromptInput({
           setShowSkillsDropdown(false);
         } else {
           if (key.upArrow) {
-            setSkillsDropdownIndex((idx) => (idx - 1 + skills.length) % skills.length);
+            setSkillsDropdownIndex(
+              (idx) => (idx - 1 + skills.length) % skills.length,
+            );
             return;
           }
           if (key.downArrow) {
             setSkillsDropdownIndex((idx) => (idx + 1) % skills.length);
             return;
           }
-          if ((input === " " && !key.ctrl && !key.meta) || (key.return && !key.shift && !key.meta)) {
+          if (
+            (input === " " && !key.ctrl && !key.meta) ||
+            (key.return && !key.shift && !key.meta)
+          ) {
             const skill = skills[skillsDropdownIndex];
             if (skill) {
               toggleSelectedSkill(skill);
@@ -288,7 +333,9 @@ export const PromptInput = React.memo(function PromptInput({
 
       if (modelDropdownStep) {
         const optionCount =
-          modelDropdownStep === "model" ? MODEL_COMMAND_MODELS.length : MODEL_COMMAND_THINKING_OPTIONS.length;
+          modelDropdownStep === "model"
+            ? MODEL_COMMAND_MODELS.length
+            : MODEL_COMMAND_THINKING_OPTIONS.length;
         if (key.upArrow) {
           setModelDropdownIndex((idx) => (idx - 1 + optionCount) % optionCount);
           return;
@@ -297,7 +344,10 @@ export const PromptInput = React.memo(function PromptInput({
           setModelDropdownIndex((idx) => (idx + 1) % optionCount);
           return;
         }
-        if ((input === " " && !key.ctrl && !key.meta) || (key.return && !key.shift && !key.meta)) {
+        if (
+          (input === " " && !key.ctrl && !key.meta) ||
+          (key.return && !key.shift && !key.meta)
+        ) {
           selectModelDropdownItem();
           return;
         }
@@ -340,7 +390,9 @@ export const PromptInput = React.memo(function PromptInput({
 
       if (showMenu) {
         if (key.upArrow) {
-          setMenuIndex((idx) => (idx - 1 + slashMenu.length) % slashMenu.length);
+          setMenuIndex(
+            (idx) => (idx - 1 + slashMenu.length) % slashMenu.length,
+          );
           return;
         }
         if (key.downArrow) {
@@ -357,7 +409,9 @@ export const PromptInput = React.memo(function PromptInput({
       }
 
       if (busy && isPlainReturn) {
-        setStatusMessage("wait for the current response or press esc to interrupt");
+        setStatusMessage(
+          "wait for the current response or press esc to interrupt",
+        );
         return;
       }
 
@@ -412,7 +466,11 @@ export const PromptInput = React.memo(function PromptInput({
       }
 
       if (key.upArrow) {
-        if (noModifier && (historyCursor !== -1 || buffer.cursor === 0) && promptHistory.length > 0) {
+        if (
+          noModifier &&
+          (historyCursor !== -1 || buffer.cursor === 0) &&
+          promptHistory.length > 0
+        ) {
           navigateHistory(-1);
           return;
         }
@@ -421,7 +479,10 @@ export const PromptInput = React.memo(function PromptInput({
       }
 
       if (key.downArrow) {
-        if (noModifier && (historyCursor !== -1 || buffer.cursor === buffer.text.length)) {
+        if (
+          noModifier &&
+          (historyCursor !== -1 || buffer.cursor === buffer.text.length)
+        ) {
           navigateHistory(1);
           return;
         }
@@ -505,7 +566,7 @@ export const PromptInput = React.memo(function PromptInput({
         updateBuffer((s) => insertText(s, sanitized));
       }
     },
-    { isActive: !disabled }
+    { isActive: !disabled },
   );
 
   function undo(): void {
@@ -535,7 +596,9 @@ export const PromptInput = React.memo(function PromptInput({
     setDraftBeforeHistory(null);
   }
 
-  function updateBuffer(updater: (state: PromptBufferState) => PromptBufferState): void {
+  function updateBuffer(
+    updater: (state: PromptBufferState) => PromptBufferState,
+  ): void {
     exitHistoryBrowsing();
     setBuffer((current) => {
       const next = updater(current);
@@ -549,8 +612,12 @@ export const PromptInput = React.memo(function PromptInput({
       return;
     }
 
-    const previousCursor = historyCursor === -1 ? promptHistory.length : historyCursor;
-    const nextCursor = Math.max(0, Math.min(promptHistory.length, previousCursor + direction));
+    const previousCursor =
+      historyCursor === -1 ? promptHistory.length : historyCursor;
+    const nextCursor = Math.max(
+      0,
+      Math.min(promptHistory.length, previousCursor + direction),
+    );
     const draft = historyCursor === -1 ? buffer.text : draftBeforeHistory;
 
     if (historyCursor === -1) {
@@ -572,7 +639,9 @@ export const PromptInput = React.memo(function PromptInput({
 
   function handleSlashSelection(item: SlashCommandItem): void {
     if (busy && item.kind !== "exit") {
-      setStatusMessage("wait for the current response or press esc to interrupt");
+      setStatusMessage(
+        "wait for the current response or press esc to interrupt",
+      );
       return;
     }
 
@@ -638,7 +707,9 @@ export const PromptInput = React.memo(function PromptInput({
 
   function submitCurrentBuffer(): void {
     if (busy) {
-      setStatusMessage("wait for the current response or press esc to interrupt");
+      setStatusMessage(
+        "wait for the current response or press esc to interrupt",
+      );
       return;
     }
 
@@ -648,7 +719,10 @@ export const PromptInput = React.memo(function PromptInput({
     }
 
     if (trimmed.startsWith("/")) {
-      const exactMatch = findExactSlashCommand(slashItems, trimmed.split(/\s+/, 1)[0]);
+      const exactMatch = findExactSlashCommand(
+        slashItems,
+        trimmed.split(/\s+/, 1)[0],
+      );
       if (exactMatch) {
         handleSlashSelection(exactMatch);
         return;
@@ -682,7 +756,9 @@ export const PromptInput = React.memo(function PromptInput({
   }
 
   function openModelDropdown(): void {
-    const currentModelIndex = MODEL_COMMAND_MODELS.findIndex((model) => model === modelConfig.model);
+    const currentModelIndex = MODEL_COMMAND_MODELS.findIndex(
+      (model) => model === modelConfig.model,
+    );
     setPendingModel(null);
     setModelDropdownStep("model");
     setModelDropdownIndex(currentModelIndex >= 0 ? currentModelIndex : 0);
@@ -696,14 +772,17 @@ export const PromptInput = React.memo(function PromptInput({
 
   function selectModelDropdownItem(): void {
     if (modelDropdownStep === "model") {
-      const model = MODEL_COMMAND_MODELS[modelDropdownIndex] ?? modelConfig.model;
+      const model =
+        MODEL_COMMAND_MODELS[modelDropdownIndex] ?? modelConfig.model;
       setPendingModel(model);
       setModelDropdownStep("thinking");
       setModelDropdownIndex(getThinkingOptionIndex(modelConfig));
       return;
     }
 
-    const option = MODEL_COMMAND_THINKING_OPTIONS[modelDropdownIndex] ?? MODEL_COMMAND_THINKING_OPTIONS[0];
+    const option =
+      MODEL_COMMAND_THINKING_OPTIONS[modelDropdownIndex] ??
+      MODEL_COMMAND_THINKING_OPTIONS[0];
     const selection: ModelConfigSelection = {
       model: pendingModel ?? modelConfig.model,
       thinkingEnabled: option.thinkingEnabled,
@@ -731,20 +810,26 @@ export const PromptInput = React.memo(function PromptInput({
         }))
       : MODEL_COMMAND_THINKING_OPTIONS.map((option) => ({
           label: option.label,
-          selected: getThinkingOptionIndex(modelConfig) === MODEL_COMMAND_THINKING_OPTIONS.indexOf(option),
-          description: option.thinkingEnabled ? `reasoningEffort: ${option.reasoningEffort}` : "thinking disabled",
+          selected:
+            getThinkingOptionIndex(modelConfig) ===
+            MODEL_COMMAND_THINKING_OPTIONS.indexOf(option),
+          description: option.thinkingEnabled
+            ? `reasoningEffort: ${option.reasoningEffort}`
+            : "thinking disabled",
         }));
 
   const showFooterText = useMemo(
     () => showMenu || showSkillsDropdown || modelDropdownStep !== null,
-    [showMenu, showSkillsDropdown, modelDropdownStep]
+    [showMenu, showSkillsDropdown, modelDropdownStep],
   );
 
   return (
     <Box flexDirection="column" width={screenWidth}>
       {imageUrls.length > 0 ? (
         <Box>
-          <Text color="magenta">{formatImageAttachmentStatus(imageUrls.length)}</Text>
+          <Text color="magenta">
+            {formatImageAttachmentStatus(imageUrls.length)}
+          </Text>
           <Text dimColor>{` (${IMAGE_ATTACHMENT_CLEAR_HINT})`}</Text>
         </Box>
       ) : null}
@@ -766,7 +851,13 @@ export const PromptInput = React.memo(function PromptInput({
         borderDimColor
       >
         <PromptPrefixLine busy={busy} />
-        <Text>{renderBufferWithCursor(buffer, !disabled && hasTerminalFocus, placeholder)}</Text>
+        <Text>
+          {renderBufferWithCursor(
+            buffer,
+            !disabled && hasTerminalFocus,
+            placeholder,
+          )}
+        </Text>
       </Box>
       {showSkillsDropdown ? (
         <DropdownMenu
@@ -779,7 +870,9 @@ export const PromptInput = React.memo(function PromptInput({
             label: skill.name,
             description: skill.path,
             selected: isSkillSelected(selectedSkills, skill),
-            statusIndicator: skill.isLoaded ? { symbol: "✓", color: "green" } : undefined,
+            statusIndicator: skill.isLoaded
+              ? { symbol: "✓", color: "green" }
+              : undefined,
           }))}
           activeIndex={skillsDropdownIndex}
           activeColor="#229ac3"
@@ -789,7 +882,11 @@ export const PromptInput = React.memo(function PromptInput({
       {modelDropdownStep ? (
         <DropdownMenu
           width={screenWidth}
-          title={modelDropdownStep === "model" ? "Select Model" : "Select Thinking Mode"}
+          title={
+            modelDropdownStep === "model"
+              ? "Select Model"
+              : "Select Thinking Mode"
+          }
           helpText={
             modelDropdownStep === "model"
               ? "space/enter select model · esc to cancel"
@@ -806,7 +903,11 @@ export const PromptInput = React.memo(function PromptInput({
           maxVisible={6}
         />
       ) : null}
-      <SlashCommandMenu width={screenWidth} items={slashMenu} activeIndex={menuIndex} />
+      <SlashCommandMenu
+        width={screenWidth}
+        items={slashMenu}
+        activeIndex={menuIndex}
+      />
       {!showFooterText && (
         <Box>
           <Text dimColor>{footerText}</Text>
@@ -833,22 +934,35 @@ export function formatSelectedSkillsStatus(skills: SkillInfo[]): string {
   return `⚡ ${names.join(", ")}`;
 }
 
-export function isSkillSelected(skills: SkillInfo[], skill: SkillInfo): boolean {
+export function isSkillSelected(
+  skills: SkillInfo[],
+  skill: SkillInfo,
+): boolean {
   return skills.some((item) => item.name === skill.name);
 }
 
-export function addUniqueSkill(skills: SkillInfo[], skill: SkillInfo): SkillInfo[] {
+export function addUniqueSkill(
+  skills: SkillInfo[],
+  skill: SkillInfo,
+): SkillInfo[] {
   if (isSkillSelected(skills, skill)) {
     return skills;
   }
   return [...skills, skill];
 }
 
-export function toggleSkillSelection(skills: SkillInfo[], skill: SkillInfo): SkillInfo[] {
-  return isSkillSelected(skills, skill) ? skills.filter((item) => item.name !== skill.name) : [...skills, skill];
+export function toggleSkillSelection(
+  skills: SkillInfo[],
+  skill: SkillInfo,
+): SkillInfo[] {
+  return isSkillSelected(skills, skill)
+    ? skills.filter((item) => item.name !== skill.name)
+    : [...skills, skill];
 }
 
-export function buildInitPromptSubmission(selectedSkills: SkillInfo[]): PromptSubmission {
+export function buildInitPromptSubmission(
+  selectedSkills: SkillInfo[],
+): PromptSubmission {
   return {
     text: "/init",
     imageUrls: [],
@@ -857,18 +971,23 @@ export function buildInitPromptSubmission(selectedSkills: SkillInfo[]): PromptSu
 }
 
 export function getThinkingOptionIndex(
-  config: Pick<ModelConfigSelection, "thinkingEnabled" | "reasoningEffort">
+  config: Pick<ModelConfigSelection, "thinkingEnabled" | "reasoningEffort">,
 ): number {
   const index = MODEL_COMMAND_THINKING_OPTIONS.findIndex((option) => {
     if (!config.thinkingEnabled) {
       return !option.thinkingEnabled;
     }
-    return option.thinkingEnabled && option.reasoningEffort === config.reasoningEffort;
+    return (
+      option.thinkingEnabled &&
+      option.reasoningEffort === config.reasoningEffort
+    );
   });
   return index >= 0 ? index : 0;
 }
 
-export function removeCurrentSlashToken(state: PromptBufferState): PromptBufferState {
+export function removeCurrentSlashToken(
+  state: PromptBufferState,
+): PromptBufferState {
   let start = state.cursor;
   while (start > 0 && !/\s/.test(state.text[start - 1] ?? "")) {
     start -= 1;
@@ -883,13 +1002,18 @@ export function removeCurrentSlashToken(state: PromptBufferState): PromptBufferS
   return { text, cursor: start };
 }
 
-export function isClearImageAttachmentsShortcut(input: string, key: Pick<InputKey, "ctrl">): boolean {
+export function isClearImageAttachmentsShortcut(
+  input: string,
+  key: Pick<InputKey, "ctrl">,
+): boolean {
   return key.ctrl && (input === "x" || input === "X");
 }
 
 export type PromptReturnKeyAction = "submit" | "newline" | null;
 
-export function getPromptReturnKeyAction(key: Pick<InputKey, "return" | "shift" | "meta">): PromptReturnKeyAction {
+export function getPromptReturnKeyAction(
+  key: Pick<InputKey, "return" | "shift" | "meta">,
+): PromptReturnKeyAction {
   if (!key.return) {
     return null;
   }
@@ -899,7 +1023,11 @@ export function getPromptReturnKeyAction(key: Pick<InputKey, "return" | "shift" 
   return "submit";
 }
 
-export function renderBufferWithCursor(state: PromptBufferState, isFocused: boolean, placeholder?: string): string {
+export function renderBufferWithCursor(
+  state: PromptBufferState,
+  isFocused: boolean,
+  placeholder?: string,
+): string {
   const text = state.text || "";
   const cursor = Math.max(0, Math.min(state.cursor, text.length));
   const before = text.slice(0, cursor);

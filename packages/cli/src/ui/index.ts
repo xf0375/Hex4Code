@@ -31,11 +31,19 @@ export {
   type PromptSubmission,
   type InputKey,
 } from "./PromptInput";
-export { disableTerminalExtendedKeys, enableTerminalExtendedKeys, getPromptCursorPlacement } from "./prompt/cursor";
+export {
+  disableTerminalExtendedKeys,
+  enableTerminalExtendedKeys,
+  getPromptCursorPlacement,
+} from "./prompt/cursor";
 export { SessionList, formatSessionTitle } from "./SessionList";
 export { ThemedGradient } from "./ThemedGradient";
 export { UpdatePrompt, type UpdatePromptChoice } from "./UpdatePrompt";
-export { WelcomeScreen, formatHomeRelativePath, buildWelcomeTips } from "./WelcomeScreen";
+export {
+  WelcomeScreen,
+  formatHomeRelativePath,
+  buildWelcomeTips,
+} from "./WelcomeScreen";
 export {
   findPendingAskUserQuestion,
   formatAskUserQuestionAnswers,
