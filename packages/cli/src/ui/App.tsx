@@ -36,6 +36,7 @@ import { buildLoadingText } from "./loadingText";
 import { findExpandedThinkingId } from "./thinkingState";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { AskUserQuestionPrompt } from "./AskUserQuestionPrompt";
+import { themeChalk } from "./theme";
 import {
   findPendingAskUserQuestion,
   formatAskUserQuestionAnswers,
@@ -286,7 +287,9 @@ export function App({
       }
       if (submission.command === "mcp") {
         process.stdout.write("\n");
-        process.stdout.write(chalk.bold.cyan("MCP Server Status\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("MCP Server Status\n"),
+        );
         process.stdout.write(chalk.dim("─────────────────\n"));
         const statuses = sessionManager.getMcpStatus();
         if (statuses.length === 0) {
@@ -345,7 +348,7 @@ export function App({
         if (subCmd === "new" || subCmd === "n") {
           const type = arg || "module";
           process.stdout.write(
-            chalk.bold.cyan("\nHEX4 New Project Generator\n"),
+            themeChalk.accentStrongBold("\nHEX4 New Project Generator\n"),
           );
           process.stdout.write(
             chalk.dim(
@@ -372,11 +375,15 @@ export function App({
           );
         } else if (subCmd === "build") {
           process.stdout.write(
-            chalk.cyan('Tip: use the `build` tool with project="<subdir>"\n'),
+            themeChalk.accent(
+              'Tip: use the `build` tool with project="<subdir>"\n',
+            ),
           );
         } else if (subCmd === "test") {
           process.stdout.write(
-            chalk.cyan('Tip: use the `test` tool with project="<subdir>"\n'),
+            themeChalk.accent(
+              'Tip: use the `test` tool with project="<subdir>"\n',
+            ),
           );
         } else {
           process.stdout.write(
@@ -395,7 +402,7 @@ export function App({
         if (subCmd === "list" || subCmd === "ls") {
           const all = sessionManager.listSessions();
           process.stdout.write(
-            chalk.bold.cyan(`\nSessions (${all.length}):\n`),
+            themeChalk.accentStrongBold(`\nSessions (${all.length}):\n`),
           );
           process.stdout.write(chalk.dim("─────────────────\n"));
           for (const s of all) {
@@ -457,7 +464,9 @@ export function App({
 
         if (subCmd === "list" || subCmd === "ls") {
           const configured = detectConfiguredProviders(process.env);
-          process.stdout.write(chalk.bold.cyan("\nAvailable Models:\n"));
+          process.stdout.write(
+            themeChalk.accentStrongBold("\nAvailable Models:\n"),
+          );
           process.stdout.write(
             chalk.dim("───────────────────────────────────────\n"),
           );
@@ -478,7 +487,7 @@ export function App({
                 ? chalk.dim(` (${Math.round(m.contextWindow / 1000)}K ctx`)
                 : "";
               process.stdout.write(
-                `    ${chalk.cyan(m.id)}${ctx}${cost ? chalk.dim(cost) : ""}${chalk.dim(")")}\n`,
+                `    ${themeChalk.accent(m.id)}${ctx}${cost ? chalk.dim(cost) : ""}${chalk.dim(")")}\n`,
               );
               if (caps) process.stdout.write(chalk.dim(`      ${caps}\n`));
             }
@@ -495,7 +504,7 @@ export function App({
 
       // ── /cost — Cost Dashboard ──────────────────────────────────────────
       if (submission.command === "cost") {
-        process.stdout.write(chalk.bold.cyan("\nCost Dashboard\n"));
+        process.stdout.write(themeChalk.accentStrongBold("\nCost Dashboard\n"));
         process.stdout.write(
           chalk.dim("───────────────────────────────────────\n"),
         );
@@ -524,7 +533,7 @@ export function App({
                 totalTokens += tokens;
                 sessionCount++;
                 process.stdout.write(
-                  `  ${chalk.cyan(e.id?.substring(0, 8) || "?")}  ${(e.summary || "(no summary)").substring(0, 40)}\n`,
+                  `  ${themeChalk.accent(e.id?.substring(0, 8) || "?")}  ${(e.summary || "(no summary)").substring(0, 40)}\n`,
                 );
                 process.stdout.write(
                   chalk.dim(
@@ -568,7 +577,9 @@ export function App({
         const { getSmartRecommendation, detectConfiguredProviders } =
           await import("@hex4code/core/models/model-router");
         const configured = detectConfiguredProviders(process.env);
-        process.stdout.write(chalk.bold.cyan("\nSmart Model Recommendation\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("\nSmart Model Recommendation\n"),
+        );
         process.stdout.write(
           chalk.dim("───────────────────────────────────────\n"),
         );
@@ -635,7 +646,7 @@ export function App({
           return;
         }
         process.stdout.write(
-          chalk.bold.cyan(
+          themeChalk.accentStrongBold(
             `\nVoting (${strategy}) — ${configured.length} providers...\n`,
           ),
         );
@@ -681,7 +692,9 @@ export function App({
           } = require("@hex4code/core/cache/semantic-cache");
           const cache = getGlobalCache();
           const stats = cache.stats();
-          process.stdout.write(chalk.bold.cyan("\nSemantic Cache\n"));
+          process.stdout.write(
+            themeChalk.accentStrongBold("\nSemantic Cache\n"),
+          );
           process.stdout.write(
             chalk.dim("───────────────────────────────────────\n"),
           );
@@ -715,7 +728,7 @@ export function App({
           await import("@hex4code/core/models/model-router");
         const configured = detectConfiguredProviders(process.env);
         process.stdout.write(
-          chalk.bold.cyan(
+          themeChalk.accentStrongBold(
             `\nBenchmarking ${Math.min(configured.length, 3)} models...\n`,
           ),
         );
@@ -773,7 +786,7 @@ export function App({
         } else {
           const status = checkQuota();
           const q = status.quota;
-          process.stdout.write(chalk.bold.cyan("\nQuota Status\n"));
+          process.stdout.write(themeChalk.accentStrongBold("\nQuota Status\n"));
           process.stdout.write(
             chalk.dim("───────────────────────────────────────\n"),
           );
@@ -811,7 +824,7 @@ export function App({
         const { getRouteInsights, getSuggestedWeights } =
           await import("@hex4code/core/models/model-router");
         const insights = getRouteInsights();
-        process.stdout.write(chalk.bold.cyan("\nRoute Insights\n"));
+        process.stdout.write(themeChalk.accentStrongBold("\nRoute Insights\n"));
         process.stdout.write(
           chalk.dim("───────────────────────────────────────\n"),
         );
@@ -876,7 +889,9 @@ export function App({
           );
           return;
         }
-        process.stdout.write(chalk.cyan("Compacting session context...\n"));
+        process.stdout.write(
+          themeChalk.accent("Compacting session context...\n"),
+        );
         try {
           await sessionManager.compactSession(activeId);
           const updated = sessionManager.getSession(activeId);
@@ -913,7 +928,9 @@ export function App({
           /* ignore */
         }
 
-        process.stdout.write(chalk.bold.cyan("\nCurrent Configuration\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("\nCurrent Configuration\n"),
+        );
         process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         process.stdout.write(chalk.bold("Model:\n"));
@@ -961,7 +978,7 @@ export function App({
         ) {
           for (const [name, srv] of Object.entries(resolved.mcpServers)) {
             process.stdout.write(
-              `  ${chalk.cyan(name)}: ${srv.command} ${(srv.args ?? []).join(" ")}\n`,
+              `  ${themeChalk.accent(name)}: ${srv.command} ${(srv.args ?? []).join(" ")}\n`,
             );
           }
         } else process.stdout.write(chalk.dim("  (none)\n"));
@@ -1000,7 +1017,7 @@ export function App({
           /* use defaults */
         }
 
-        process.stdout.write(chalk.bold.cyan("\nContext Usage\n"));
+        process.stdout.write(themeChalk.accentStrongBold("\nContext Usage\n"));
         process.stdout.write(chalk.dim("═══════════════════════════════\n"));
         process.stdout.write(
           `  Model:          ${chalk.green(resolved.model)}\n`,
@@ -1080,7 +1097,9 @@ export function App({
         let checks = 0;
         let passes = 0;
 
-        process.stdout.write(chalk.bold.cyan("\nDiagnostic Report\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("\nDiagnostic Report\n"),
+        );
         process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         // 1. Node version
@@ -1233,7 +1252,9 @@ export function App({
           fs.writeFileSync(memoryPath, JSON.stringify(items, null, 2), "utf8");
         };
 
-        process.stdout.write(chalk.bold.cyan("\nLong-Term Memory\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("\nLong-Term Memory\n"),
+        );
         process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         if (subCmd === "list" || subCmd === "ls") {
@@ -1246,7 +1267,7 @@ export function App({
           } else {
             for (const item of items) {
               process.stdout.write(
-                `  ${chalk.cyan(item.id.slice(0, 6))}  ${item.text.slice(0, 70)}\n`,
+                `  ${themeChalk.accent(item.id.slice(0, 6))}  ${item.text.slice(0, 70)}\n`,
               );
               process.stdout.write(chalk.dim(`       ${item.createdAt}\n`));
             }
@@ -1299,7 +1320,9 @@ export function App({
 
       // ── /release-notes — Show CHANGELOG ──────────────────────────────╼
       if (submission.command === "release-notes") {
-        process.stdout.write(chalk.bold.cyan("\nRelease Notes (CHANGELOG)\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("\nRelease Notes (CHANGELOG)\n"),
+        );
         process.stdout.write(chalk.dim("═══════════════════════════════\n"));
         const candidates = [
           path.join(projectRoot, "CHANGELOG.md"),
@@ -1342,7 +1365,9 @@ export function App({
           ? sessionManager.getSession(activeId)
           : null;
 
-        process.stdout.write(chalk.bold.cyan("\nConnection Status\n"));
+        process.stdout.write(
+          themeChalk.accentStrongBold("\nConnection Status\n"),
+        );
         process.stdout.write(chalk.dim("═══════════════════════════════\n"));
 
         process.stdout.write(chalk.bold("Active Model:\n"));
@@ -1403,7 +1428,9 @@ export function App({
 
         if (subCmd === "list" || subCmd === "ls") {
           const configured = detectConfiguredProviders(process.env);
-          process.stdout.write(chalk.bold.cyan("\nAI Providers:\n"));
+          process.stdout.write(
+            themeChalk.accentStrongBold("\nAI Providers:\n"),
+          );
           process.stdout.write(chalk.dim("─────────────────\n"));
           for (const p of PROVIDERS) {
             const isConfigured = configured.includes(p.id);
@@ -1437,7 +1464,7 @@ export function App({
             );
           } else {
             process.stdout.write(
-              chalk.cyan(`\nEnter API key for ${provider.name}\n`),
+              themeChalk.accent(`\nEnter API key for ${provider.name}\n`),
             );
             process.stdout.write(
               chalk.dim(`  (press Enter to use ENV ${provider.apiKeyEnv})\n`),
@@ -1530,7 +1557,9 @@ export function App({
             }
           }
         } else if (subCmd === "status" || subCmd === "health") {
-          process.stdout.write(chalk.bold.cyan("\nProvider Health:\n"));
+          process.stdout.write(
+            themeChalk.accentStrongBold("\nProvider Health:\n"),
+          );
           process.stdout.write(
             chalk.dim("───────────────────────────────────────\n"),
           );

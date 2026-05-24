@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Box, Text } from "ink";
+import { CLI_THEME } from "./theme";
 
 /**
  * Generic dropdown menu item structure
@@ -71,8 +72,8 @@ const DropdownMenu = React.memo(function DropdownMenu({
   maxVisible = 8,
   width,
   title,
-  titleColor = "magenta",
-  activeColor = "cyanBright",
+  titleColor = CLI_THEME.accentStrong,
+  activeColor = CLI_THEME.accentStrong,
   helpText,
   emptyText = "No items found",
   renderItem,
@@ -128,14 +129,14 @@ const DropdownMenu = React.memo(function DropdownMenu({
       flexDirection="column"
       marginBottom={1}
       borderStyle={"round"}
-      borderDimColor
+      borderColor={CLI_THEME.border}
       width={width}
     >
       {/* Title */}
       {title ? (
         <Box
           borderStyle={"single"}
-          borderDimColor
+          borderColor={CLI_THEME.borderSoft}
           borderBottom={true}
           borderRight={false}
           borderTop={false}
@@ -213,7 +214,7 @@ const DropdownMenu = React.memo(function DropdownMenu({
       {helpText ? (
         <Box
           borderStyle={"single"}
-          borderDimColor
+          borderColor={CLI_THEME.borderSoft}
           borderBottom={false}
           borderRight={false}
           borderTop={true}

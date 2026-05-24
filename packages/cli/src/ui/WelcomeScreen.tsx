@@ -11,6 +11,7 @@ import {
 } from "./slashCommands";
 import { ThemedGradient } from "./ThemedGradient";
 import { AsciiLogo } from "../AsciiArt";
+import { CLI_THEME } from "./theme";
 
 type WelcomeScreenProps = {
   projectRoot: string;
@@ -20,7 +21,7 @@ type WelcomeScreenProps = {
   width: number;
 };
 
-const TITLE_PANEL_WIDTH = 70;
+const TITLE_PANEL_WIDTH = 74;
 const PANEL_CONTENT_HEIGHT = 8;
 
 const SHORTCUT_TIPS = [
@@ -55,13 +56,13 @@ export function WelcomeScreen({
               justifyContent="center"
               width={compact ? undefined : TITLE_PANEL_WIDTH}
             >
-              <ThemedGradient>{AsciiLogo}</ThemedGradient>
+              <ThemedGradient bold>{AsciiLogo}</ThemedGradient>
             </Box>
           </Box>
 
           <Box
             borderStyle={"round"}
-            borderColor={"#229ac3e6"}
+            borderColor={CLI_THEME.border}
             flexDirection="column"
             flexGrow={1}
             height={compact ? undefined : PANEL_CONTENT_HEIGHT}
@@ -69,7 +70,7 @@ export function WelcomeScreen({
             paddingX={1}
           >
             <Box flexGrow={1} marginBottom={compact ? 1 : 0}>
-              <Text color={"#229ac3e6"}>{">"}_ Hex4Code </Text>
+              <Text color={CLI_THEME.accentStrong}>{">"}_ Hex4Code </Text>
               <Text color="gray"> (v{version || "unknown"})</Text>
             </Box>
             {!compact ? <Text> </Text> : null}

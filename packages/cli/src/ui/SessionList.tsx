@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Box, Text, useInput, useWindowSize } from "ink";
 import type { SessionEntry } from "@hex4code/core/session";
+import { CLI_THEME } from "./theme";
 
 type Props = {
   sessions: SessionEntry[];
@@ -104,16 +105,16 @@ export function SessionList({
       <Box
         flexDirection="column"
         borderStyle="round"
-        borderDimColor
+        borderColor={CLI_THEME.border}
         flexGrow={1}
         overflow="hidden"
       >
         {/* Header row */}
         <Box paddingX={1}>
-          <Text bold color="cyanBright">
+          <Text bold color={CLI_THEME.accentStrong}>
             Resume a session
           </Text>
-          <Text bold color="#229ac3">
+          <Text bold color={CLI_THEME.accent}>
             {" "}
             ({sessions.length} total)
           </Text>
@@ -125,7 +126,7 @@ export function SessionList({
           borderLeft={false}
           borderRight={false}
           borderStyle="round"
-          borderDimColor
+          borderColor={CLI_THEME.borderSoft}
           flexDirection="column"
           flexGrow={1}
           paddingX={1}
@@ -136,7 +137,7 @@ export function SessionList({
             return (
               <Box key={session.id} height={2} marginBottom={1}>
                 <Box>
-                  <Text color="#229ac3">
+                  <Text color={CLI_THEME.accent}>
                     {actualIndex === safeIndex ? "› " : "  "}
                   </Text>
                 </Box>
@@ -144,7 +145,11 @@ export function SessionList({
                   <Box width={"100%"}>
                     <Text
                       {...(actualIndex === safeIndex ? { bold: true } : {})}
-                      color={actualIndex === safeIndex ? "#229ac3" : undefined}
+                      color={
+                        actualIndex === safeIndex
+                          ? CLI_THEME.accentStrong
+                          : undefined
+                      }
                     >
                       {formatSessionTitle(session.summary || "Untitled")}
                     </Text>

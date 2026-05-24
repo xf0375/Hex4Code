@@ -5,6 +5,7 @@ import {
 import type { SlashCommandItem } from "./slashCommands";
 import React from "react";
 import { Box, Text } from "ink";
+import { CLI_THEME } from "./theme";
 
 type SlashCommandMenuProps = {
   items: SlashCommandItem[];
@@ -54,7 +55,11 @@ const SlashCommandMenu = React.memo(function SlashCommandMenu({
           <Box key={item.label} gap={2} flexDirection="row" flexGrow={1}>
             <Box width={labelColumnWidth} flexShrink={0}>
               <Text
-                color={actualIndex === activeIndex ? "#229ac3" : undefined}
+                color={
+                  actualIndex === activeIndex
+                    ? CLI_THEME.accentStrong
+                    : undefined
+                }
                 wrap="truncate-end"
               >
                 {actualIndex === activeIndex ? "› " : "  "}
@@ -63,7 +68,9 @@ const SlashCommandMenu = React.memo(function SlashCommandMenu({
             </Box>
             <Box flexGrow={1}>
               <Text
-                color={actualIndex === activeIndex ? "#229ac3" : undefined}
+                color={
+                  actualIndex === activeIndex ? CLI_THEME.accent : undefined
+                }
                 wrap="truncate-end"
                 dimColor
               >
