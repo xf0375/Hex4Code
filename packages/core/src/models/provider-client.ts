@@ -12,14 +12,11 @@
 ///   - Gemini适配器提供与OpenAI兼容的接口签名
 ///   - 所有客户端懒加载（只在首次使用时创建）
 
-import { createRequire } from "node:module";
 import { getProviderByModel } from "./provider-registry";
 
 // ── OpenAI SDK 类型引用（用于类型导出，避免直接导入） ──────────
 // 实际import在函数内部懒加载，确保启动时不阻塞
-import type OpenAI from "openai";
-
-const nodeRequire = createRequire(import.meta.url);
+import OpenAI from "openai";
 
 // ── Gemini 适配器类型 ───────────────────────────────────────────
 /**
@@ -124,7 +121,6 @@ export function createClient(config: ClientConfig): UnifiedClient | null {
 function createOpenAICompatibleClient(apiKey: string, baseURL: string): OpenAI {
   // 动态导入OpenAI SDK（懒加载）
 
-  const { default: OpenAI } = nodeRequire("openai") as typeof import("openai");
   return new OpenAI({ apiKey, baseURL });
 }
 
