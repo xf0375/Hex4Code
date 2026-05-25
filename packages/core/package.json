@@ -11,6 +11,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm run typecheck",
     "test": "echo '⚠ No test files yet — see CONTRIBUTING.md for how to add tests'",
     "typecheck": "npx tsc --noEmit"
   },

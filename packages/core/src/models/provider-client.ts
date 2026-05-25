@@ -16,7 +16,7 @@ import { getProviderByModel } from "./provider-registry";
 
 // ── OpenAI SDK 类型引用（用于类型导出，避免直接导入） ──────────
 // 实际import在函数内部懒加载，确保启动时不阻塞
-import type OpenAI from "openai";
+import OpenAI from "openai";
 
 // ── Gemini 适配器类型 ───────────────────────────────────────────
 /**
@@ -121,7 +121,6 @@ export function createClient(config: ClientConfig): UnifiedClient | null {
 function createOpenAICompatibleClient(apiKey: string, baseURL: string): OpenAI {
   // 动态导入OpenAI SDK（懒加载）
 
-  const { default: OpenAI } = require("openai") as typeof import("openai");
   return new OpenAI({ apiKey, baseURL });
 }
 

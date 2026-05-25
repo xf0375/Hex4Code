@@ -40,20 +40,52 @@ let _modeStatusBarItem: vscode.StatusBarItem | undefined;
 // ── Model Status Bar ─────────────────────────────────────────────────
 let _modelStatusBarItem: vscode.StatusBarItem | undefined;
 
-function readSettingsModel(): string {
+function getWorkspaceRootFromVsCode(): string | null {
+  const workspace = vscode.workspace.workspaceFolders?.[0];
+  return workspace?.uri.fsPath ?? null;
+}
+
+function readSettingsFileAt(settingsPath: string): Hex4codeSettings | null {
   try {
-    const os = require("os");
-    const path = require("path");
-    const settingsPath = path.join(os.homedir(), ".hex4code", "settings.json");
-    if (require("fs").existsSync(settingsPath)) {
-      const raw = require("fs").readFileSync(settingsPath, "utf8");
-      const settings = JSON.parse(raw);
-      return settings.model || process.env.HEX4CODE_MODEL || DEFAULT_MODEL;
+    if (!fs.existsSync(settingsPath)) {
+      return null;
     }
+    const raw = fs.readFileSync(settingsPath, "utf8");
+    return JSON.parse(raw) as Hex4codeSettings;
   } catch {
-    /* ignore */
+    return null;
   }
-  return process.env.HEX4CODE_MODEL || DEFAULT_MODEL;
+}
+
+function readUserSettingsFile(): Hex4codeSettings | null {
+  return readSettingsFileAt(path.join(os.homedir(), ".hex4code", "settings.json"));
+}
+
+function readProjectSettingsFile(workspaceRoot = getWorkspaceRootFromVsCode()): Hex4codeSettings | null {
+  if (!workspaceRoot) {
+    return null;
+  }
+  return readSettingsFileAt(path.join(workspaceRoot, ".hex4code", "settings.json"));
+}
+
+function ensureSettingsEnv(settings: Hex4codeSettings): NonNullable<Hex4codeSettings["env"]> {
+  if (!settings.env || typeof settings.env !== "object") {
+    settings.env = {};
+  }
+  return settings.env;
+}
+
+function readResolvedSettingsForUi(): ResolvedHex4codeSettings {
+  return resolveSettingsSources(
+    readUserSettingsFile(),
+    readProjectSettingsFile(),
+    { model: DEFAULT_MODEL, baseURL: DEFAULT_BASE_URL },
+    process.env,
+  );
+}
+
+function readSettingsModel(): string {
+  return readResolvedSettingsForUi().model;
 }
 
 function updateModelStatusBar(): void {
@@ -184,8 +216,6 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.context.extensionUri],
     };
 
-    webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
-
     webviewView.webview.onDidReceiveMessage(async (message) => {
       if (message?.type === "ready") {
         // webview 已准备好，发送初始数据
@@ -227,6 +257,8 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
         }
       }
     });
+
+    webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
   }
 
   private async loadInitialSession(): Promise<void> {
@@ -241,17 +273,23 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
 
     if (sessions.length === 0) {
       // 没有历史会话，显示新对话界面
-      this.sendMessage({
-        type: "initializeEmpty",
-        sessions: sessionsList,
-        status: null,
-        tokenTelemetry: this.buildTokenTelemetry(null),
-      });
+      this.sendEmptyState(sessionsList);
       return;
     }
 
     // 显示最新的对话
     const latestSession = sessions[0];
+    const latestMessages = this.sessionManager
+      .listSessionMessages(latestSession.id)
+      .filter((message) => message.visible);
+    if (
+      latestMessages.length === 0 ||
+      latestSession.status === "pending" ||
+      latestSession.status === "processing"
+    ) {
+      this.sendEmptyState(sessionsList);
+      return;
+    }
     this.loadSession(latestSession.id);
   }
 
@@ -327,13 +365,25 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
       status: s.status,
     }));
 
+    this.sendEmptyState(sessionsList);
+    await this.sendSkillsList();
+  }
+
+  private sendEmptyState(
+    sessions: Array<{
+      id: string;
+      summary: string;
+      createTime: string;
+      updateTime: string;
+      status: SessionEntry["status"];
+    }>,
+  ): void {
     this.sendMessage({
       type: "initializeEmpty",
-      sessions: sessionsList,
+      sessions,
       status: null,
       tokenTelemetry: this.buildTokenTelemetry(null),
     });
-    await this.sendSkillsList();
   }
 
   private sendMessage(message: any): void {
@@ -608,7 +658,7 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
     const attachmentsJsUri = webview.asWebviewUri(attachmentsJsPath);
 
     // 获取 Logo 文件 URI
-    const iconPath = vscode.Uri.joinPath(this.context.extensionUri, "resources", "hex4coding_icon.png.png");
+    const iconPath = vscode.Uri.joinPath(this.context.extensionUri, "resources", "hex4code_icon.png");
     const iconUri = webview.asWebviewUri(iconPath);
 
     // 替换占位符
@@ -641,18 +691,12 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
 // ── Multi-Model UI Commands ─────────────────────────────────────────
 
 /** 读入 .hex4code/settings.json */
-function readSettingsFile(): Record<string, unknown> {
-  try {
-    const p = path.join(os.homedir(), ".hex4code", "settings.json");
-    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {
-    /* ignore */
-  }
-  return {};
+function readSettingsFile(): Hex4codeSettings {
+  return readUserSettingsFile() ?? {};
 }
 
 /** 写入 .hex4code/settings.json */
-function writeSettingsFile(settings: Record<string, unknown>): void {
+function writeSettingsFile(settings: Hex4codeSettings): void {
   const dir = path.join(os.homedir(), ".hex4code");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings, null, 2), "utf8");
@@ -667,7 +711,7 @@ async function showModelPicker(): Promise<void> {
   // 检测当前已配置的 Provider
   const configuredProviders = detectConfiguredProviders(process.env);
   const currentSettings = readSettingsFile();
-  const currentModel = (currentSettings.model as string) || "";
+  const currentModel = readResolvedSettingsForUi().model;
 
   // 构建 QuickPick 选项（按 Provider 分组）
   const items: vscode.QuickPickItem[] = [];
@@ -728,7 +772,11 @@ async function showModelPicker(): Promise<void> {
     for (const model of provider.models) {
       if (selected.label.includes(model.label)) {
         // 保存选择
-        currentSettings.model = model.id;
+        const env = ensureSettingsEnv(currentSettings);
+        env.MODEL = model.id;
+        if (!env.BASE_URL) {
+          env.BASE_URL = provider.defaultBaseURL;
+        }
         writeSettingsFile(currentSettings);
         vscode.window.showInformationMessage(
           `已选择模型: ${provider.name} - ${model.label}（${model.id}）`,
@@ -748,11 +796,12 @@ async function showModelPicker(): Promise<void> {
 async function configureProviders(): Promise<void> {
   const configuredProviders = detectConfiguredProviders(process.env);
   const currentSettings = readSettingsFile();
+  const settingsEnv = ensureSettingsEnv(currentSettings);
 
   // 构建 QuickPick
   const items: vscode.QuickPickItem[] = PROVIDERS.map((provider) => {
     const isConfigured = configuredProviders.includes(provider.id);
-    const existingApiKey = currentSettings[`${provider.id}ApiKey`] as string | undefined;
+    const existingApiKey = settingsEnv.API_KEY;
     const icon = isConfigured ? "$(check)" : existingApiKey ? "$(key)" : "$(unverified)";
     return {
       label: `${icon} ${provider.name}`,
@@ -822,11 +871,12 @@ async function configureProviders(): Promise<void> {
 
   if (apiKey) {
     // 保存到 settings.json
-    currentSettings[`${provider.id}ApiKey`] = apiKey;
+    settingsEnv.API_KEY = apiKey;
+    settingsEnv.BASE_URL = provider.defaultBaseURL;
     // 如果未设置默认模型，自动选择最便宜的模型
-    if (!currentSettings.model && provider.models.length > 0) {
+    if (!settingsEnv.MODEL && provider.models.length > 0) {
       const cheapest = [...provider.models].sort((a, b) => a.costPer1MInput - b.costPer1MInput)[0];
-      currentSettings.model = cheapest.id;
+      settingsEnv.MODEL = cheapest.id;
       vscode.window.showInformationMessage(
         `已将 ${provider.name} 的 API Key 保存到 settings.json，并自动选择 ${cheapest.label} 作为默认模型`,
       );

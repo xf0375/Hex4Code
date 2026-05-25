@@ -20,6 +20,7 @@ export type McpServerConfig = {
 export type Hex4codeSettings = {
   env?: Hex4codeEnv;
   model?: string;
+  taskModels?: Record<string, string>;
   thinkingEnabled?: boolean;
   reasoningEffort?: ReasoningEffort;
   debugLogEnabled?: boolean;

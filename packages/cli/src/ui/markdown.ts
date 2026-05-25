@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { themeChalk } from "./theme";
 
 export function renderMarkdown(text: string): string {
   if (!text) {
@@ -12,7 +13,7 @@ export function renderMarkdown(text: string): string {
         const langTag = segment.lang
           ? chalk.dim(`[${segment.lang}]`) + "\n"
           : "";
-        return langTag + chalk.cyan(segment.body);
+        return langTag + themeChalk.inlineCode(segment.body);
       }
       return renderInlineBlock(segment.body);
     })
@@ -93,21 +94,21 @@ function renderInlineLine(line: string): string {
     const [, lead, hashes, content] = headingMatch;
     const styled =
       hashes.length <= 2
-        ? chalk.bold.cyanBright(content)
-        : chalk.bold.cyan(content);
+        ? themeChalk.accentStrongBold(content)
+        : themeChalk.accentBold(content);
     return `${lead}${chalk.dim(hashes)} ${styled}`;
   }
 
   const listMatch = /^(\s*)([-*+])\s+(.*)$/.exec(line);
   if (listMatch) {
     const [, lead, bullet, content] = listMatch;
-    return `${lead}${chalk.yellow(bullet)} ${renderInlineSpans(content)}`;
+    return `${lead}${themeChalk.warning(bullet)} ${renderInlineSpans(content)}`;
   }
 
   const numListMatch = /^(\s*)(\d+\.)\s+(.*)$/.exec(line);
   if (numListMatch) {
     const [, lead, marker, content] = numListMatch;
-    return `${lead}${chalk.yellow(marker)} ${renderInlineSpans(content)}`;
+    return `${lead}${themeChalk.warning(marker)} ${renderInlineSpans(content)}`;
   }
 
   const quoteMatch = /^(\s*)>\s?(.*)$/.exec(line);
@@ -124,7 +125,9 @@ function renderInlineSpans(text: string): string {
     return text;
   }
   let result = text;
-  result = result.replace(/`([^`]+)`/g, (_, inner) => chalk.cyan(inner));
+  result = result.replace(/`([^`]+)`/g, (_, inner) =>
+    themeChalk.inlineCode(inner),
+  );
   result = result.replace(/\*\*([^*]+)\*\*/g, (_, inner) => chalk.bold(inner));
   result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, (_, inner) =>
     chalk.italic(inner),

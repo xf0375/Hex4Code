@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { renderMarkdown } from "./markdown";
-import type { SessionMessage } from "@hex4/core/session";
+import type { SessionMessage } from "@hex4code/core/session";
+import { CLI_THEME } from "./theme";
 
 type Props = {
   message: SessionMessage;
@@ -30,13 +31,15 @@ export function MessageView({
         gap={1}
       >
         <Box>
-          <Text color="#229ac3">{`>`}</Text>
+          <Text color={CLI_THEME.accent}>{`>`}</Text>
         </Box>
         <Box flexGrow={1}>
-          <Text color="#229ac3">{text}</Text>
+          <Text color={CLI_THEME.accent}>{text}</Text>
           {Array.isArray(message.contentParams) &&
           message.contentParams.length > 0 ? (
-            <Text color="#229ac3">{`  📎 ${message.contentParams.length} image attachment(s)`}</Text>
+            <Text
+              color={CLI_THEME.accent}
+            >{`  📎 ${message.contentParams.length} image attachment(s)`}</Text>
           ) : null}
         </Box>
       </Box>
@@ -79,7 +82,7 @@ export function MessageView({
         flexDirection="row"
       >
         <Box alignSelf="stretch">
-          <Text color="#229ac3">✦</Text>
+          <Text color={CLI_THEME.accentStrong}>✦</Text>
         </Box>
         <Box flexGrow={1} width={contentWidth}>
           {content ? <Text wrap="wrap">{renderMarkdown(content)}</Text> : null}
@@ -116,10 +119,10 @@ export function MessageView({
           gap={1}
         >
           <Box>
-            <Text color="#229ac3">{`>`}</Text>
+            <Text color={CLI_THEME.accent}>{`>`}</Text>
           </Box>
           <Box flexGrow={1} flexDirection="column">
-            <Text color="#229ac3">{message.content}</Text>
+            <Text color={CLI_THEME.accent}>{message.content}</Text>
           </Box>
         </Box>
       );

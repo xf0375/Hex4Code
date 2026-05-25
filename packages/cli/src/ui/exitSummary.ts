@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import gradientString from "gradient-string";
-import type { SessionEntry, SessionMessage } from "@hex4/core/session";
+import type { SessionEntry, SessionMessage } from "@hex4code/core/session";
+import { CLI_THEME } from "./theme";
 
 type ExitSummaryInput = {
   session: SessionEntry | null;
@@ -82,8 +83,11 @@ export function buildExitSummaryText(input: ExitSummaryInput): string {
   const innerWidth = 98;
   const contentWidth = innerWidth - 4; // "│  " prefix + "  │" suffix → 4 chars padding
 
-  const borderColor = chalk.hex("#229ac3e6");
-  const titleColor = gradientString("#229ac3e6", "rgb(125 51 247 / 0.7)");
+  const borderColor = chalk.hex(CLI_THEME.border);
+  const titleColor = gradientString(
+    CLI_THEME.accentStrong,
+    CLI_THEME.accentDeep,
+  );
   const line = (text: string) =>
     `${borderColor("│")}  ${padRight(text, contentWidth)}  ${borderColor("│")}`;
 

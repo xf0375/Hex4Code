@@ -1,4 +1,4 @@
-import type { SessionMessage, SessionStatus } from "@hex4/core/session";
+import type { SessionMessage, SessionStatus } from "@hex4code/core/session";
 
 export type AskUserQuestionOption = {
   label: string;

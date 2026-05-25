@@ -35,7 +35,7 @@ import {
 } from "./slashCommands";
 import type { SlashCommandItem, SlashCommandKind } from "./slashCommands";
 import { readClipboardImageAsync } from "./clipboard";
-import type { SkillInfo } from "@hex4/core/session";
+import type { SkillInfo } from "@hex4code/core/session";
 
 // Re-exported from prompt modules for backward compatibility
 export { useTerminalInput, parseTerminalInput } from "./prompt";
@@ -49,10 +49,11 @@ import {
   useTerminalFocusReporting,
 } from "./prompt";
 import SlashCommandMenu from "./SlashCommandMenu";
+import { CLI_THEME } from "./theme";
 import type {
   ModelConfigSelection,
   ReasoningEffort,
-} from "@hex4/core/settings";
+} from "@hex4code/core/settings";
 import DropdownMenu from "./DropdownMenu";
 
 export type PromptSubmission = {
@@ -125,7 +126,7 @@ const PromptPrefixLine = React.memo(function PromptPrefixLine({
   }, [busy]);
 
   const prefix = busy ? `${SPINNER_FRAMES[spinnerIndex]} ` : "> ";
-  return <Text color={busy ? "yellow" : "#229ac3"}>{prefix}</Text>;
+  return <Text color={busy ? "yellow" : CLI_THEME.accent}>{prefix}</Text>;
 });
 
 export const PromptInput = React.memo(function PromptInput({
@@ -887,7 +888,7 @@ export const PromptInput = React.memo(function PromptInput({
               : undefined,
           }))}
           activeIndex={skillsDropdownIndex}
-          activeColor="#229ac3"
+          activeColor={CLI_THEME.accentStrong}
           maxVisible={6}
         />
       ) : null}
@@ -911,7 +912,7 @@ export const PromptInput = React.memo(function PromptInput({
             selected: item.selected,
           }))}
           activeIndex={modelDropdownIndex}
-          activeColor="#229ac3"
+          activeColor={CLI_THEME.accentStrong}
           maxVisible={6}
         />
       ) : null}

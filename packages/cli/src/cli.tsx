@@ -1,6 +1,6 @@
 import { render } from "ink";
 import { App } from "./ui";
-import { setShellIfWindows } from "@hex4/core/common/shell-utils";
+import { setShellIfWindows } from "@hex4code/core/common/shell-utils";
 import {
   checkForNpmUpdate,
   promptForPendingUpdate,
@@ -21,16 +21,16 @@ if (args.includes("--help") || args.includes("-h")) {
       "HEX4 Four Symbols CLI",
       "",
       "Usage:",
-      "  hex4                  Launch the interactive TUI in the current directory",
-      "  hex4 --version    Print the version",
-      "  hex4 --help       Show this help",
+      "  hex4code                  Launch the interactive TUI in the current directory",
+      "  hex4code --version    Print the version",
+      "  hex4code --help       Show this help",
       "",
       "Configuration:",
-      "  ~/.hex4/settings.json         User-level API key, model, base URL",
-      "  ./.hex4/settings.json         Project-level settings",
+      "  ~/.hex4code/settings.json         User-level API key, model, base URL",
+      "  ./.hex4code/settings.json         Project-level settings",
       "  ~/.agents/skills/*/SKILL.md  User-level skills",
       "  ./.agents/skills/*/SKILL.md  Project-level skills",
-      "  ./.hex4/skills/*/SKILL.md Legacy project-level skills",
+      "  ./.hex4code/skills/*/SKILL.md Legacy project-level skills",
       "",
       "Inside the TUI:",
       "  enter            Send the prompt",

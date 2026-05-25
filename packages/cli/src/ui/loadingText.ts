@@ -1,4 +1,4 @@
-import type { LlmStreamProgress, SessionEntry } from "@hex4/core/session";
+import type { LlmStreamProgress, SessionEntry } from "@hex4code/core/session";
 
 type RunningProcesses = SessionEntry["processes"];
 

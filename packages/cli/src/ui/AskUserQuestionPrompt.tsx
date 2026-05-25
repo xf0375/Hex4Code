@@ -5,6 +5,7 @@ import type {
   AskUserQuestionItem,
 } from "./askUserQuestion";
 import { useTerminalInput } from "./PromptInput";
+import { CLI_THEME } from "./theme";
 
 type Props = {
   questions: AskUserQuestionItem[];
@@ -188,12 +189,12 @@ export function AskUserQuestionPrompt({
     <Box
       flexDirection="column"
       borderStyle="round"
-      borderColor="yellow"
+      borderColor={CLI_THEME.border}
       paddingX={1}
       marginY={1}
     >
       <Box marginBottom={1}>
-        <Text color="yellow" bold>
+        <Text color={CLI_THEME.accentStrong} bold>
           Answer questions
         </Text>
         <Text dimColor>
@@ -219,7 +220,7 @@ export function AskUserQuestionPrompt({
               : "○";
           return (
             <Box key={option.value} flexDirection="column">
-              <Text color={isCursor ? "cyanBright" : undefined}>
+              <Text color={isCursor ? CLI_THEME.accentStrong : undefined}>
                 {isCursor ? "› " : "  "}
                 {marker} <Text bold={isCursor}>{option.label}</Text>
               </Text>
@@ -228,14 +229,16 @@ export function AskUserQuestionPrompt({
                   marginLeft={4}
                   marginTop={0}
                   borderStyle="single"
-                  borderColor={isCursor ? "cyanBright" : "gray"}
+                  borderColor={isCursor ? CLI_THEME.accentStrong : "gray"}
                   paddingX={1}
                   width={64}
                 >
                   {otherText ? (
                     <Text color="white">
                       {otherText}
-                      {isCursor ? <Text color="cyanBright">▌</Text> : null}
+                      {isCursor ? (
+                        <Text color={CLI_THEME.accentStrong}>▌</Text>
+                      ) : null}
                     </Text>
                   ) : (
                     <Text dimColor>
