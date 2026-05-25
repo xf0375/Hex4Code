@@ -29,16 +29,3 @@
 
 - 修复长时间会话内存泄漏问题
 - 修复多 provider 并发调用时的竞态条件
-
----
-
-## [1.0.0] — 2025-12-01
-
-### 新增
-
-- 初始版本发布
-- `@hex4code/core`：核心引擎（会话管理、多模型路由、工具执行）
-- `@hex4code/cli`：基于 Ink 的终端聊天应用
-- `hex4code-vscode`：VS Code 聊天面板扩展
-- 支持 DeepSeek、OpenAI、Qwen、Doubao 多供应商
-- 14 个 VS Code 命令
