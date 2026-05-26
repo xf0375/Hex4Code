@@ -727,10 +727,32 @@
       bubble.appendChild(contentDiv);
     } else if (role === "tool") {
       // 工具气泡（可折叠）
+      // DualTrit 压缩字段映射
+      const DT_EXPAND = {
+        k: "ok", n: "name", o: "output", e: "error", t: "tcState",
+        c: "tcChain", m: "metadata", a: "awaitUserResponse", d: "description",
+        s: "source", C: "content", r: "result", D: "duration_ms", x: "exit_code",
+        T: "total", P: "passed", F: "failed", S: "summary", u: "truncated",
+        f: "failures", E: "errors", W: "warnings", L: "line", M: "message",
+      };
+      function dtDecompress(obj) {
+        if (!obj || typeof obj !== "object" || Array.isArray(obj)) return obj;
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+          const ek = DT_EXPAND[key] || key;
+          result[ek] = (value && typeof value === "object" && !Array.isArray(value))
+            ? dtDecompress(value)
+            : Array.isArray(value) ? value.map(v => dtDecompress(v)) : value;
+        }
+        return result;
+      }
       let toolData = { ok: false, name: "unknown", output: "" };
       try {
-        // content是JSON字符串，包含ok、name、output等字段
-        toolData = JSON.parse(content || "{}");
+        const parsed = JSON.parse(content || "{}");
+        // 如果检测到压缩字段(k,n,o)，做完整解压；否则直接使用
+        toolData = (parsed.k !== undefined || parsed.n !== undefined)
+          ? dtDecompress(parsed)
+          : parsed;
       } catch (e) {
         // 忽略解析错误
       }
