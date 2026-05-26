@@ -1,4 +1,5 @@
 import { defaultsToThinkingMode } from "./common/model-capabilities";
+import type { ModelProvider } from "./models/provider-registry";
 
 export type Hex4codeEnv = Record<string, string | undefined> & {
   MODEL?: string;
@@ -17,8 +18,17 @@ export type McpServerConfig = {
   env?: Record<string, string>;
 };
 
+export type ProviderSettings = {
+  apiKey?: string;
+  baseURL?: string;
+};
+
 export type Hex4codeSettings = {
   env?: Hex4codeEnv;
+  apiKey?: string;
+  providers?: Partial<Record<ModelProvider, ProviderSettings>>;
+  legacyApiKeyProvider?: ModelProvider;
+  legacyBaseURLProvider?: ModelProvider;
   model?: string;
   taskModels?: Record<string, string>;
   thinkingEnabled?: boolean;
@@ -33,7 +43,11 @@ export type ResolvedHex4codeSettings = {
   env: Record<string, string>;
   apiKey?: string;
   baseURL: string;
+  providers?: Partial<Record<ModelProvider, ProviderSettings>>;
+  legacyApiKeyProvider?: ModelProvider;
+  legacyBaseURLProvider?: ModelProvider;
   model: string;
+  taskModels?: Record<string, string>;
   thinkingEnabled: boolean;
   reasoningEffort: ReasoningEffort;
   debugLogEnabled: boolean;
@@ -85,6 +99,29 @@ function normalizeEnv(env: Hex4codeSettings["env"]): Record<string, string> {
   for (const [key, value] of Object.entries(env)) {
     if (typeof value === "string") {
       result[key] = value;
+    }
+  }
+  return result;
+}
+
+function normalizeProviders(settings?: Hex4codeSettings | null): Partial<Record<ModelProvider, ProviderSettings>> {
+  const result: Partial<Record<ModelProvider, ProviderSettings>> = {};
+  const providers = settings?.providers;
+  if (!providers || typeof providers !== "object") {
+    return result;
+  }
+
+  for (const [providerId, providerSettings] of Object.entries(providers)) {
+    if (!providerSettings || typeof providerSettings !== "object") {
+      continue;
+    }
+    const apiKey = trimString((providerSettings as ProviderSettings).apiKey);
+    const baseURL = trimString((providerSettings as ProviderSettings).baseURL);
+    if (apiKey || baseURL) {
+      result[providerId as ModelProvider] = {
+        ...(apiKey ? { apiKey } : {}),
+        ...(baseURL ? { baseURL } : {}),
+      };
     }
   }
   return result;
@@ -244,12 +281,30 @@ export function resolveSettingsSources(
     trimString(projectSettings?.webSearchTool) ||
     trimString(userSettings?.webSearchTool) ||
     "";
+  const taskModels = {
+    ...(userSettings?.taskModels ?? {}),
+    ...(projectSettings?.taskModels ?? {}),
+  };
+  const providers = {
+    ...normalizeProviders(userSettings),
+    ...normalizeProviders(projectSettings),
+  };
 
   return {
     env,
-    apiKey: trimString(env.API_KEY) || undefined,
+    apiKey:
+      trimString(systemEnv.API_KEY) ||
+      trimString(projectSettings?.apiKey) ||
+      trimString(projectEnv.API_KEY) ||
+      trimString(userSettings?.apiKey) ||
+      trimString(userEnv.API_KEY) ||
+      undefined,
     baseURL: trimString(env.BASE_URL) || defaults.baseURL,
+    providers: Object.keys(providers).length > 0 ? providers : undefined,
+    legacyApiKeyProvider: projectSettings?.legacyApiKeyProvider ?? userSettings?.legacyApiKeyProvider,
+    legacyBaseURLProvider: projectSettings?.legacyBaseURLProvider ?? userSettings?.legacyBaseURLProvider,
     model,
+    taskModels: Object.keys(taskModels).length > 0 ? taskModels : undefined,
     thinkingEnabled,
     reasoningEffort,
     debugLogEnabled,

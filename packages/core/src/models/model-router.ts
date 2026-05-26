@@ -54,6 +54,110 @@ export type RouterConfig = {
   baseURLOverrides?: Partial<Record<ModelProvider, string>>;
 };
 
+export type ProviderRouteInput = {
+  model?: string;
+  routing?: Partial<Record<TaskType, string>>;
+  env?: Record<string, string | undefined>;
+  providers?: Partial<Record<ModelProvider, { apiKey?: string; baseURL?: string }>>;
+  legacyApiKeyProvider?: ModelProvider;
+  legacyBaseURLProvider?: ModelProvider;
+  processEnv?: Record<string, string | undefined>;
+};
+
+export type ProviderRouteResolution = RouteResult & {
+  apiKey: string;
+  apiKeySource: "settings.providers" | "settings.env.provider" | "process.env.provider" | "legacy.apiKey" | "missing";
+  baseURLSource: "settings.providers" | "settings.env.provider" | "process.env.provider" | "legacy.baseURL" | "provider.default";
+  configuredProviders: ModelProvider[];
+  warnings: string[];
+};
+
+export type ProviderRuntimeModel = {
+  providerId: ModelProvider;
+  providerName: string;
+  modelId: string;
+  label: string;
+  baseURL: string;
+  apiKey: string;
+  apiKeySource: ProviderRouteResolution["apiKeySource"];
+  baseURLSource: ProviderRouteResolution["baseURLSource"];
+};
+
+function trimEnvValue(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function mergeRouteEnv(
+  settingsEnv: Record<string, string | undefined> | undefined,
+  processEnv: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
+): Record<string, string> {
+  const merged: Record<string, string> = {};
+  for (const [key, value] of Object.entries(processEnv)) {
+    if (typeof value === "string") {
+      merged[key] = value;
+    }
+  }
+  for (const [key, value] of Object.entries(settingsEnv ?? {})) {
+    if (typeof value === "string") {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function normalizeRouteProviders(
+  providers: ProviderRouteInput["providers"],
+): Partial<Record<ModelProvider, { apiKey?: string; baseURL?: string }>> {
+  const result: Partial<Record<ModelProvider, { apiKey?: string; baseURL?: string }>> = {};
+  for (const [providerId, providerSettings] of Object.entries(providers ?? {})) {
+    if (!providerSettings || typeof providerSettings !== "object") {
+      continue;
+    }
+    const apiKey = trimEnvValue(providerSettings.apiKey);
+    const baseURL = trimEnvValue(providerSettings.baseURL);
+    if (apiKey || baseURL) {
+      result[providerId as ModelProvider] = {
+        ...(apiKey ? { apiKey } : {}),
+        ...(baseURL ? { baseURL } : {}),
+      };
+    }
+  }
+  return result;
+}
+
+function getProviderEnvPrefix(provider: ProviderConfig): string {
+  return provider.apiKeyEnv.replace(/_API_KEY$/, "");
+}
+
+function getProviderBaseURL(provider: ProviderConfig, env: Record<string, string>): string {
+  const prefix = getProviderEnvPrefix(provider);
+  return trimEnvValue(env[`${prefix}_BASE_URL`]) || trimEnvValue(env[`${prefix}_BASEURL`]);
+}
+
+function getBaseURLOverrides(env: Record<string, string>): Partial<Record<ModelProvider, string>> {
+  const overrides: Partial<Record<ModelProvider, string>> = {};
+  for (const provider of PROVIDERS) {
+    const baseURL = getProviderBaseURL(provider, env);
+    if (baseURL) {
+      overrides[provider.id] = baseURL;
+    }
+  }
+  return overrides;
+}
+
+function getConfiguredProviders(
+  env: Record<string, string>,
+  providers: Partial<Record<ModelProvider, { apiKey?: string; baseURL?: string }>>,
+): ModelProvider[] {
+  const configured = new Set<ModelProvider>(detectConfiguredProviders(env));
+  for (const [providerId, providerSettings] of Object.entries(providers)) {
+    if (trimEnvValue(providerSettings?.apiKey)) {
+      configured.add(providerId as ModelProvider);
+    }
+  }
+  return Array.from(configured);
+}
+
 // ── 任务→所需能力的映射 ────────────────────────────────────────────
 const TASK_CAPABILITY: Record<TaskType, string[]> = {
   completion: ["fast", "chat"],
@@ -210,6 +314,109 @@ export function detectConfiguredProviders(
  * 获取任务的路由说明（用于调试和显示）。
  * 返回所有路由策略的详细解释。
  */
+export function resolveProviderRoute(task: TaskType, input: ProviderRouteInput = {}): ProviderRouteResolution {
+  const env = mergeRouteEnv(input.env, input.processEnv);
+  const providers = normalizeRouteProviders(input.providers);
+  const configuredProviders = getConfiguredProviders(env, providers);
+  const route = routeTask(task, {
+    explicitModel: input.model,
+    routing: input.routing,
+    configuredProviders,
+    baseURLOverrides: getBaseURLOverrides(env),
+  });
+  const provider = getProvider(route.provider);
+  const providerSettings = providers[route.provider];
+  const settingsProviderApiKey = trimEnvValue(providerSettings?.apiKey);
+  const providerEnvKey = provider?.apiKeyEnv;
+  const settingsEnvProviderApiKey = providerEnvKey ? trimEnvValue(input.env?.[providerEnvKey]) : "";
+  const processProviderApiKey = providerEnvKey ? trimEnvValue(input.processEnv?.[providerEnvKey]) : "";
+  const legacyApiKey = trimEnvValue(env.API_KEY) || trimEnvValue(env.HEX4CODE_API_KEY);
+  const legacyApiKeyAllowed =
+    Boolean(legacyApiKey) &&
+    (input.legacyApiKeyProvider === route.provider ||
+      (configuredProviders.length <= 1 && configuredProviders[0] === route.provider) ||
+      (configuredProviders.length === 0 && route.provider === "deepseek"));
+  const apiKey = settingsProviderApiKey || settingsEnvProviderApiKey || processProviderApiKey || (legacyApiKeyAllowed ? legacyApiKey : "");
+  const apiKeySource = settingsProviderApiKey
+    ? "settings.providers"
+    : settingsEnvProviderApiKey
+      ? "settings.env.provider"
+      : processProviderApiKey
+        ? "process.env.provider"
+        : legacyApiKeyAllowed
+          ? "legacy.apiKey"
+          : "missing";
+
+  const settingsProviderBaseURL = trimEnvValue(providerSettings?.baseURL);
+  const providerBaseURL = provider ? getProviderBaseURL(provider, env) : "";
+  const legacyBaseURL = trimEnvValue(env.BASE_URL);
+  const legacyBaseURLAllowed = Boolean(legacyBaseURL) && input.legacyBaseURLProvider === route.provider;
+  const baseURL = settingsProviderBaseURL || providerBaseURL || (legacyBaseURLAllowed ? legacyBaseURL : "") || route.baseURL;
+  const baseURLSource = settingsProviderBaseURL
+    ? "settings.providers"
+    : providerBaseURL
+      ? input.env && provider && trimEnvValue(input.env[`${getProviderEnvPrefix(provider)}_BASE_URL`] ?? input.env[`${getProviderEnvPrefix(provider)}_BASEURL`])
+        ? "settings.env.provider"
+        : "process.env.provider"
+      : legacyBaseURLAllowed
+        ? "legacy.baseURL"
+        : "provider.default";
+  const warnings: string[] = [];
+  if (legacyApiKey && !legacyApiKeyAllowed && !apiKey) {
+    warnings.push(
+      `Ignoring legacy API_KEY for provider "${route.provider}" because its ownership is unknown. Configure ${route.apiKeyEnv} or providers.${route.provider}.apiKey.`,
+    );
+  }
+
+  return {
+    ...route,
+    baseURL,
+    apiKey,
+    apiKeySource,
+    baseURLSource,
+    configuredProviders,
+    warnings,
+  };
+}
+
+export function listConfiguredProviderRuntimeModels(
+  task: TaskType,
+  input: ProviderRouteInput = {},
+): ProviderRuntimeModel[] {
+  const routes: ProviderRuntimeModel[] = [];
+  const usedProviders = new Set<ModelProvider>();
+
+  for (const provider of PROVIDERS) {
+    const model =
+      provider.models.find((candidate) => candidate.capabilities.includes("chat" as any)) ?? provider.models[0];
+    if (!model) {
+      continue;
+    }
+
+    const route = resolveProviderRoute(task, {
+      ...input,
+      model: model.id,
+    });
+    if (!route.apiKey || usedProviders.has(route.provider)) {
+      continue;
+    }
+    const routedProvider = getProvider(route.provider);
+    routes.push({
+      providerId: route.provider,
+      providerName: routedProvider?.name ?? route.provider,
+      modelId: route.modelId,
+      label: route.modelDef.label,
+      baseURL: route.baseURL,
+      apiKey: route.apiKey,
+      apiKeySource: route.apiKeySource,
+      baseURLSource: route.baseURLSource,
+    });
+    usedProviders.add(route.provider);
+  }
+
+  return routes;
+}
+
 export function explainRouting(task: TaskType, config: RouterConfig = {}): string[] {
   const lines: string[] = [];
   lines.push(`任务: ${task}`);
@@ -680,6 +887,7 @@ export async function parallelVote(
     strategy?: "majority" | "consensus" | "fastest";
     modelCount?: number;
     signal?: AbortSignal;
+    runtimeModels?: ProviderRuntimeModel[];
   },
 ): Promise<VoteResult> {
   const { strategy = "majority", modelCount = 3, signal } = options || {};
@@ -692,8 +900,20 @@ export async function parallelVote(
     provider: string;
     baseURL: string;
     apiKeyEnv: string;
-  }> = [];
+    apiKey?: string;
+  }> = (options?.runtimeModels ?? []).slice(0, modelCount).map((runtime) => ({
+    modelId: runtime.modelId,
+    label: runtime.label,
+    provider: runtime.providerName,
+    baseURL: runtime.baseURL,
+    apiKeyEnv: "",
+    apiKey: runtime.apiKey,
+  }));
   const usedProviders = new Set<string>();
+
+  for (const runtime of options?.runtimeModels ?? []) {
+    usedProviders.add(runtime.providerId);
+  }
 
   for (const providerId of configuredProviders) {
     if (selectedModels.length >= modelCount) break;
@@ -738,7 +958,7 @@ export async function parallelVote(
     selectedModels.map(async (m) => {
       const start = Date.now();
       try {
-        const apiKey = process.env[m.apiKeyEnv] || "";
+        const apiKey = m.apiKey || process.env[m.apiKeyEnv] || "";
         if (!apiKey) {
           return {
             modelId: m.modelId,
@@ -887,13 +1107,30 @@ export interface BenchmarkResult {
 export async function benchmarkModels(
   prompt: string,
   configuredProviders: ModelProvider[],
-  options?: { modelCount?: number; signal?: AbortSignal },
+  options?: { modelCount?: number; signal?: AbortSignal; runtimeModels?: ProviderRuntimeModel[] },
 ): Promise<BenchmarkResult> {
   const modelCount = options?.modelCount || 3;
   const taskId = `bench_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-  const selected: Array<{ modelId: string; label: string; provider: string; baseURL: string; apiKeyEnv: string }> = [];
+  const selected: Array<{
+    modelId: string;
+    label: string;
+    provider: string;
+    baseURL: string;
+    apiKeyEnv: string;
+    apiKey?: string;
+  }> = (options?.runtimeModels ?? []).slice(0, modelCount).map((runtime) => ({
+    modelId: runtime.modelId,
+    label: runtime.label,
+    provider: runtime.providerName,
+    baseURL: runtime.baseURL,
+    apiKeyEnv: "",
+    apiKey: runtime.apiKey,
+  }));
   const used = new Set<string>();
+  for (const runtime of options?.runtimeModels ?? []) {
+    used.add(runtime.providerId);
+  }
 
   for (const pid of configuredProviders) {
     if (selected.length >= modelCount) break;
@@ -916,7 +1153,7 @@ export async function benchmarkModels(
     selected.map(async (m) => {
       const start = Date.now();
       try {
-        const apiKey = process.env[m.apiKeyEnv] || "";
+        const apiKey = m.apiKey || process.env[m.apiKeyEnv] || "";
         const { createClient } = require("./provider-client");
         const client = createClient({ modelId: m.modelId, apiKey, baseURL: m.baseURL });
         const completion = await client.chat.completions.create(

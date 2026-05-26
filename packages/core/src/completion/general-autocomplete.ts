@@ -15,7 +15,7 @@
 
 import * as vscode from "vscode";
 import OpenAI from "openai";
-import { routeTask, detectConfiguredProviders } from "../models/model-router";
+import { resolveProviderRoute } from "../models/model-router";
 import { createClient } from "../models/provider-client";
 
 // ── Configuration ─────────────────────────────────────────────────────
@@ -160,25 +160,41 @@ export class GeneralAutocompleteProvider implements vscode.InlineCompletionItemP
       const path = require("path");
       const fs = require("fs");
       const settingsPath = path.join(os.homedir(), ".hex4code", "settings.json");
-      let userModel: string | undefined;
-      let userApiKey: string | undefined;
+      let settings: Record<string, unknown> = {};
       if (fs.existsSync(settingsPath)) {
         const raw = fs.readFileSync(settingsPath, "utf8");
-        const settings = JSON.parse(raw);
-        userApiKey = settings.apiKey;
-        userModel = settings.model;
+        settings = JSON.parse(raw);
       }
 
       // 使用多模型路由选择补全模型
-      const configuredProviders = detectConfiguredProviders(process.env);
-      const route = routeTask("completion", {
-        explicitModel: userModel,
-        configuredProviders,
+      const settingsEnv =
+        settings.env && typeof settings.env === "object" && !Array.isArray(settings.env)
+          ? (settings.env as Record<string, string | undefined>)
+          : {};
+      const route = resolveProviderRoute("completion", {
+        model: typeof settings.model === "string" ? settings.model : undefined,
+        routing:
+          settings.taskModels && typeof settings.taskModels === "object" && !Array.isArray(settings.taskModels)
+            ? (settings.taskModels as Record<string, string>)
+            : undefined,
+        env: {
+          ...settingsEnv,
+          API_KEY: typeof settings.apiKey === "string" ? settings.apiKey : settingsEnv.API_KEY,
+        },
+        providers:
+          settings.providers && typeof settings.providers === "object" && !Array.isArray(settings.providers)
+            ? (settings.providers as any)
+            : undefined,
+        legacyApiKeyProvider:
+          typeof settings.legacyApiKeyProvider === "string" ? (settings.legacyApiKeyProvider as any) : undefined,
+        legacyBaseURLProvider:
+          typeof settings.legacyBaseURLProvider === "string" ? (settings.legacyBaseURLProvider as any) : undefined,
+        processEnv: process.env,
       });
 
       this.model = route.modelId;
       this.baseURL = route.baseURL;
-      this.apiKey = userApiKey || process.env[route.apiKeyEnv] || process.env.HEX4CODE_API_KEY || "";
+      this.apiKey = route.apiKey;
 
       // 使用provider-client工厂创建客户端
       const client = createClient({
