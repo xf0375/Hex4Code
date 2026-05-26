@@ -299,11 +299,7 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
     const latestMessages = this.sessionManager
       .listSessionMessages(latestSession.id)
       .filter((message) => message.visible);
-    if (
-      latestMessages.length === 0 ||
-      latestSession.status === "pending" ||
-      latestSession.status === "processing"
-    ) {
+    if (latestMessages.length === 0) {
       this.sendEmptyState(sessionsList);
       return;
     }
