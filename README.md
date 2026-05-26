@@ -92,7 +92,7 @@ hex4_code_v1.1/
 
 ```bash
 git clone https://atomgit.com/zzwgbdt/Hex4Code.git
-cd hex4_code_v1.1
+cd Hex4Code
 ```
 
 ### 2. 安装依赖
