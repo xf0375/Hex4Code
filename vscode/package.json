@@ -46,10 +46,6 @@
         "title": "Hex4Code: Select Model"
       },
       {
-        "command": "hex4code.configureProviders",
-        "title": "Hex4Code: Configure AI Providers"
-      },
-      {
         "command": "hex4code.configureTaskModels",
         "title": "Hex4Code: Configure Task-Specific Models"
       },

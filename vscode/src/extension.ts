@@ -753,16 +753,6 @@ async function showModelPicker(): Promise<void> {
     }
   }
 
-  // 底部：说明项
-  items.push({
-    label: "",
-    kind: vscode.QuickPickItemKind.Separator,
-  });
-  items.push({
-    label: "$(gear) 配置 Provider API Key",
-    description: "设置多个模型的访问密钥",
-  });
-
   const selected = await vscode.window.showQuickPick(items, {
     placeHolder: "选择默认模型（按任务路由自动匹配）",
     matchOnDescription: true,
@@ -770,12 +760,6 @@ async function showModelPicker(): Promise<void> {
   });
 
   if (!selected) return;
-
-  // 点击"配置 Provider API Key"
-  if (selected.label.includes("配置 Provider API Key")) {
-    await configureProviders();
-    return;
-  }
 
   // 从 label 提取模型名
   for (const provider of PROVIDERS) {
@@ -974,12 +958,12 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // ── Provider Configuration ─────────────────────────────────────────
-  context.subscriptions.push(
-    vscode.commands.registerCommand("hex4code.configureProviders", async () => {
-      await configureProviders();
-    }),
-  );
+  // ── Provider Configuration (disabled — users edit settings.json directly) ──
+  // context.subscriptions.push(
+  //   vscode.commands.registerCommand("hex4code.configureProviders", async () => {
+  //     await configureProviders();
+  //   }),
+  // );
 
   // ── Provider Health Command ─────────────────────────────────────────
   context.subscriptions.push(
@@ -1245,11 +1229,9 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       const configured = detectConfiguredProviders(process.env);
       if (configured.length < 2) {
-        const confirm = await vscode.window.showWarningMessage(
-          "At least 2 providers needed for voting. Configure more providers?",
-          "Configure",
+        vscode.window.showInformationMessage(
+          "At least 2 providers needed for voting. Please edit settings.json to add more API keys.",
         );
-        if (confirm) vscode.commands.executeCommand("hex4code.configureProviders");
         return;
       }
       const strategyItems: vscode.QuickPickItem[] = [
@@ -1503,13 +1485,8 @@ export function activate(context: vscode.ExtensionContext): void {
         setTimeout(() => {
           vscode.window
             .showInformationMessage(
-              `🌟 发现 ${available.length} 个 AI Provider 可配置（如 ${available[0].name}）。设 ${available[0].apiKeyEnv} 环境变量即可激活。`,
-              "配置 Provider",
-              "稍后",
-            )
-            .then((sel) => {
-              if (sel === "配置 Provider") vscode.commands.executeCommand("hex4code.configureProviders");
-            });
+              `发现 ${available.length} 个 AI Provider 可配置（如 ${available[0].name}）。请在 settings.json 中设置 ${available[0].apiKeyEnv} 或环境变量即可激活。`,
+            );
         }, 5000);
       }
     } catch {
