@@ -225,11 +225,23 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
       if (message?.type === "ready") {
         // webview 已准备好，发送初始数据
         this.loadInitialSession();
+        this.sendSettingsState();
         // 同时请求 skills 列表
         this.sendSkillsList();
       } else if (message?.type === "requestSkills") {
         // 请求 skills 列表
         this.sendSkillsList();
+      } else if (message?.type === "requestSettingsState") {
+        this.sendSettingsState();
+      } else if (message?.type === "selectModel") {
+        const modelId = String(message.modelId || "").trim();
+        if (modelId) {
+          await this.selectModelFromWebview(modelId);
+        }
+      } else if (message?.type === "openProviderSettings") {
+        await configureProviders();
+        updateModelStatusBar();
+        this.sendSettingsState();
       } else if (message?.type === "userPrompt") {
         const prompt = String(message.prompt || "").trim();
         const images = Array.isArray(message.images)
@@ -406,6 +418,105 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
       sessionId ?? this.sessionManager.getActiveSessionId() ?? undefined,
     );
     this.sendMessage({ type: "skillsList", skills });
+  }
+
+  private buildSettingsState() {
+    const settings = this.resolveCurrentSettings();
+    const routeInput = {
+      model: settings.model,
+      routing: settings.taskModels,
+      env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env.API_KEY },
+      providers: settings.providers,
+      legacyApiKeyProvider: settings.legacyApiKeyProvider,
+      legacyBaseURLProvider: settings.legacyBaseURLProvider,
+      processEnv: process.env,
+    };
+    const currentRoute = resolveProviderRoute("chat", routeInput);
+    const currentProvider = PROVIDERS.find((provider) => provider.id === currentRoute.provider);
+
+    return {
+      currentModel: currentRoute.modelId,
+      currentLabel: currentRoute.modelDef?.label ?? currentRoute.modelId,
+      providerId: currentRoute.provider,
+      providerName: currentProvider?.name ?? currentRoute.provider,
+      apiKeyEnv: currentRoute.apiKeyEnv,
+      apiKeySource: currentRoute.apiKeySource,
+      baseURLSource: currentRoute.baseURLSource,
+      baseURL: currentRoute.baseURL,
+      configured: Boolean(currentRoute.apiKey),
+      warnings: currentRoute.warnings,
+      providers: PROVIDERS.map((provider) => ({
+        id: provider.id,
+        name: provider.name,
+        apiKeyEnv: provider.apiKeyEnv,
+        defaultBaseURL: provider.defaultBaseURL,
+        configured: provider.models.some((model) => {
+          const route = resolveProviderRoute("chat", { ...routeInput, model: model.id });
+          return Boolean(route.apiKey);
+        }),
+        models: provider.models.map((model) => {
+          const route = resolveProviderRoute("chat", { ...routeInput, model: model.id });
+          return {
+            id: model.id,
+            label: model.label,
+            providerId: provider.id,
+            providerName: provider.name,
+            apiKeyEnv: provider.apiKeyEnv,
+            configured: Boolean(route.apiKey),
+            apiKeySource: route.apiKeySource,
+            baseURLSource: route.baseURLSource,
+            baseURL: route.baseURL,
+            contextWindow: model.contextWindow,
+            costPer1MInput: model.costPer1MInput,
+            costPer1MOutput: model.costPer1MOutput,
+            capabilities: model.capabilities,
+          };
+        }),
+      })),
+    };
+  }
+
+  public sendSettingsState(): void {
+    this.sendMessage({
+      type: "settingsState",
+      state: this.buildSettingsState(),
+    });
+  }
+
+  private async selectModelFromWebview(modelId: string): Promise<void> {
+    const model = getModelDef(modelId);
+    if (!model) {
+      vscode.window.showWarningMessage(`Unknown model: ${modelId}`);
+      return;
+    }
+
+    const settings = readSettingsFile();
+    const env = ensureSettingsEnv(settings);
+    env.MODEL = model.id;
+    settings.model = model.id;
+    writeSettingsFile(settings);
+    updateModelStatusBar();
+    this.sendSettingsState();
+
+    const route = resolveProviderRoute("chat", {
+      model: model.id,
+      routing: settings.taskModels,
+      env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env?.API_KEY },
+      providers: settings.providers,
+      legacyApiKeyProvider: settings.legacyApiKeyProvider,
+      legacyBaseURLProvider: settings.legacyBaseURLProvider,
+      processEnv: process.env,
+    });
+
+    if (!route.apiKey) {
+      const provider = PROVIDERS.find((item) => item.id === route.provider);
+      vscode.window.showWarningMessage(
+        `${model.label} selected, but ${provider?.name ?? route.provider} has no API key configured.`,
+      );
+      return;
+    }
+
+    vscode.window.showInformationMessage(`Model selected: ${model.label}`);
   }
 
   private async handlePrompt(prompt: string, skills?: SkillInfo[], imageUrls?: string[]): Promise<void> {
@@ -811,6 +922,7 @@ async function showModelPicker(): Promise<void> {
         env.MODEL = model.id;
         currentSettings.model = model.id;
         writeSettingsFile(currentSettings);
+        updateModelStatusBar();
         vscode.window.showInformationMessage(
           `已选择模型: ${provider.name} - ${model.label}（${model.id}）`,
           `输入: $${model.costPer1MInput}/M · 输出: $${model.costPer1MOutput}/M`,
@@ -918,6 +1030,7 @@ async function configureProviders(): Promise<void> {
       vscode.window.showInformationMessage(`已将 ${provider.name} 的 API Key 保存到 settings.json`);
     }
     writeSettingsFile(currentSettings);
+    updateModelStatusBar();
   } else {
     // 用户留空 → 使用环境变量
     const envKey = process.env[provider.apiKeyEnv];
@@ -995,6 +1108,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("hex4code.selectModel", async () => {
       await showModelPicker();
+      provider.sendSettingsState();
     }),
   );
 
