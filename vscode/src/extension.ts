@@ -490,11 +490,11 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const settings = readSettingsFile();
+    const { settings, scope } = readWritableModelSettings();
     const env = ensureSettingsEnv(settings);
     env.MODEL = model.id;
     settings.model = model.id;
-    writeSettingsFile(settings);
+    writeWritableModelSettings(settings, scope);
     updateModelStatusBar();
     this.sendSettingsState();
 
@@ -825,6 +825,36 @@ function writeSettingsFile(settings: Hex4codeSettings): void {
   fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings, null, 2), "utf8");
 }
 
+function writeProjectSettingsFile(settings: Hex4codeSettings): boolean {
+  const workspaceRoot = getWorkspaceRootFromVsCode();
+  if (!workspaceRoot) {
+    return false;
+  }
+  const dir = path.join(workspaceRoot, ".hex4code");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings, null, 2), "utf8");
+  return true;
+}
+
+function hasModelOverride(settings: Hex4codeSettings | null | undefined): boolean {
+  return Boolean(String(settings?.model || "").trim() || String(settings?.env?.MODEL || "").trim());
+}
+
+function readWritableModelSettings(): { settings: Hex4codeSettings; scope: "project" | "user" } {
+  const projectSettings = readProjectSettingsFile();
+  if (hasModelOverride(projectSettings)) {
+    return { settings: projectSettings ?? {}, scope: "project" };
+  }
+  return { settings: readSettingsFile(), scope: "user" };
+}
+
+function writeWritableModelSettings(settings: Hex4codeSettings, scope: "project" | "user"): void {
+  if (scope === "project" && writeProjectSettingsFile(settings)) {
+    return;
+  }
+  writeSettingsFile(settings);
+}
+
 function getProviderSettings(settings: Hex4codeSettings, provider: (typeof PROVIDERS)[number]) {
   return settings.providers?.[provider.id];
 }
@@ -872,7 +902,7 @@ function getConfiguredProviderIdsFromSettings(): Array<ProviderRuntimeModel["pro
  */
 async function showModelPicker(): Promise<void> {
   // 检测当前已配置的 Provider
-  const currentSettings = readSettingsFile();
+  const { settings: currentSettings, scope } = readWritableModelSettings();
   const currentModel = readResolvedSettingsForUi().model;
 
   // 构建 QuickPick 选项（按 Provider 分组）
@@ -921,7 +951,7 @@ async function showModelPicker(): Promise<void> {
         const env = ensureSettingsEnv(currentSettings);
         env.MODEL = model.id;
         currentSettings.model = model.id;
-        writeSettingsFile(currentSettings);
+        writeWritableModelSettings(currentSettings, scope);
         updateModelStatusBar();
         vscode.window.showInformationMessage(
           `已选择模型: ${provider.name} - ${model.label}（${model.id}）`,
