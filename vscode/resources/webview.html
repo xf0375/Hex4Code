@@ -158,6 +158,8 @@
   let sessionSearchInput = null;
   let sessionDropdownList = null;
   let modelState = null;
+  let modelSearchQuery = "";
+  let modelOnlyConfigured = true;
   let lastMessageRole = null;
   let currentThinkingBubble = null; // 记录当前展开的思考气泡
   let availableSkills = []; // 可用的技能列表
@@ -1248,7 +1250,72 @@
     }
 
     modelDropdown.innerHTML = "";
+    const query = modelSearchQuery.trim().toLowerCase();
+
+    const controls = document.createElement("div");
+    controls.className = "model-dropdown-controls";
+
+    const search = document.createElement("input");
+    search.type = "text";
+    search.className = "model-search-input";
+    search.placeholder = "Search models...";
+    search.value = modelSearchQuery;
+    search.addEventListener("input", (event) => {
+      modelSearchQuery = event.target.value || "";
+      renderModelDropdown();
+      const nextSearch = modelDropdown.querySelector(".model-search-input");
+      if (nextSearch) {
+        nextSearch.focus();
+        nextSearch.setSelectionRange(nextSearch.value.length, nextSearch.value.length);
+      }
+    });
+
+    const filterLabel = document.createElement("label");
+    filterLabel.className = "model-filter-toggle";
+    const filter = document.createElement("input");
+    filter.type = "checkbox";
+    filter.checked = modelOnlyConfigured;
+    filter.addEventListener("change", () => {
+      modelOnlyConfigured = filter.checked;
+      renderModelDropdown();
+    });
+    const filterText = document.createElement("span");
+    filterText.textContent = "Only configured";
+    filterLabel.appendChild(filter);
+    filterLabel.appendChild(filterText);
+
+    controls.appendChild(search);
+    controls.appendChild(filterLabel);
+    modelDropdown.appendChild(controls);
+
+    let renderedModelCount = 0;
     (modelState.providers || []).forEach((provider) => {
+      const providerModels = (provider.models || []).filter((model) => {
+        if (modelOnlyConfigured && !model.configured) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        const haystack = [
+          provider.name,
+          provider.id,
+          model.label,
+          model.id,
+          model.providerName,
+          model.apiKeyEnv,
+          ...(model.capabilities || []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      });
+
+      if (providerModels.length === 0) {
+        return;
+      }
+
       const group = document.createElement("div");
       group.className = "model-dropdown-group";
 
@@ -1264,7 +1331,8 @@
       header.appendChild(status);
       group.appendChild(header);
 
-      (provider.models || []).forEach((model) => {
+      providerModels.forEach((model) => {
+        renderedModelCount += 1;
         const item = document.createElement("button");
         item.className = "model-dropdown-item";
         item.type = "button";
@@ -1301,6 +1369,15 @@
 
       modelDropdown.appendChild(group);
     });
+
+    if (renderedModelCount === 0) {
+      const empty = document.createElement("div");
+      empty.className = "model-dropdown-empty";
+      empty.textContent = modelOnlyConfigured
+        ? "No configured models match. Turn off Only configured to browse all models."
+        : "No models match your search.";
+      modelDropdown.appendChild(empty);
+    }
 
     const footer = document.createElement("button");
     footer.className = "model-dropdown-footer";
@@ -1659,6 +1736,12 @@
     modelSelector.classList.toggle("open", Boolean(isOpen));
     sessionDropdown.classList.remove("show");
     sessionSelector.classList.remove("open");
+    if (isOpen) {
+      setTimeout(() => {
+        const search = modelDropdown?.querySelector(".model-search-input");
+        search?.focus();
+      }, 0);
+    }
   });
 
   modelConfigBtn?.addEventListener("click", (event) => {

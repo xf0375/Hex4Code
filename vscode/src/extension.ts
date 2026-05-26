@@ -1139,11 +1139,13 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // ── Provider Configuration (disabled — users edit settings.json directly) ──
-  // context.subscriptions.push(
-  //   vscode.commands.registerCommand("hex4code.configureProviders", async () => {
-  //     await configureProviders();
-  //   }),
-  // );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("hex4code.configureProviders", async () => {
+      await configureProviders();
+      updateModelStatusBar();
+      provider.sendSettingsState();
+    }),
+  );
 
   // ── Provider Health Command ─────────────────────────────────────────
   context.subscriptions.push(
