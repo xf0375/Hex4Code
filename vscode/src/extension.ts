@@ -423,6 +423,16 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
 
     try {
       const userPrompt: UserPromptContent = { text: prompt, skills, imageUrls: normalizedImages };
+
+      // 注入当前打开的文件上下文
+      const activeEditor = vscode.window.activeTextEditor;
+      if (activeEditor) {
+        const doc = activeEditor.document;
+        userPrompt.activeFile = {
+          path: doc.uri.fsPath,
+          content: doc.getText(),
+        };
+      }
       await this.sessionManager.handleUserPrompt(userPrompt);
       await this.sendSkillsList();
 

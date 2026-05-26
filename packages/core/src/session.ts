@@ -169,6 +169,7 @@ export type UserPromptContent = {
   text?: string;
   imageUrls?: string[];
   skills?: SkillInfo[];
+  activeFile?: { path: string; content?: string } | null;
 };
 
 export type SkillInfo = {
@@ -453,6 +454,11 @@ export class SessionManager {
               const current = toolCallsByIndex.get(index) ?? {};
               if (typeof rawToolCall.id === "string") {
                 current.id = rawToolCall.id;
+              } else if (current.id === undefined) {
+                // Some providers may omit the id in streaming deltas;
+                // assign a synthetic id so downstream tool-call pairing
+                // does not skip this call and cause a 400 mismatch.
+                current.id = `stream_${index}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
               }
               if (typeof rawToolCall.type === "string") {
                 current.type = rawToolCall.type;
@@ -1085,7 +1091,7 @@ ${skillMd}
         }
         const assistantMessage = this.buildAssistantMessage(sessionId, content, toolCalls, thinking);
         this.appendSessionMessage(sessionId, assistantMessage);
-        this.onAssistantMessage(assistantMessage, true);
+        this.onAssistantMessage(assistantMessage, !!toolCalls);
 
         let waitingForUser = false;
         if (toolCalls) {
@@ -1169,8 +1175,19 @@ ${skillMd}
       return;
     }
 
-    const startIndex = sessionMessages.findIndex((message) => message.role !== "system");
+    let startIndex = sessionMessages.findIndex((message) => message.role !== "system");
     if (startIndex === -1) {
+      return;
+    }
+
+    // 跳过前导的孤立 tool 消息（配对的 assistant 已在上一轮压缩中被移除）
+    while (
+      startIndex < sessionMessages.length &&
+      sessionMessages[startIndex].role === "tool"
+    ) {
+      startIndex += 1;
+    }
+    if (startIndex >= sessionMessages.length) {
       return;
     }
 
@@ -1522,11 +1539,21 @@ ${skillMd}
           image_url: { url },
         })) ?? [];
 
+    let content = prompt.text ?? "";
+    if (prompt.activeFile?.path) {
+      const fileInfo = `[active file: ${prompt.activeFile.path}]`;
+      if (prompt.activeFile.content) {
+        content = `${fileInfo}\n\`\`\`\n${prompt.activeFile.content}\n\`\`\`\n${content}`;
+      } else {
+        content = content ? `${fileInfo}\n${content}` : fileInfo;
+      }
+    }
+
     return {
       id: crypto.randomUUID(),
       sessionId,
       role: "user",
-      content: prompt.text ?? "",
+      content,
       contentParams: imageParams.length > 0 ? imageParams : null,
       messageParams: null,
       compacted: false,
@@ -1645,7 +1672,15 @@ ${skillMd}
     const messageParams: { tool_calls?: unknown[]; reasoning_content?: string } | null =
       toolCalls || hasReasoningContent ? {} : null;
     if (toolCalls) {
-      messageParams!.tool_calls = toolCalls;
+      // Filter out any tool_call that lacks a valid id to prevent
+      // downstream buildOpenAIMessages 400 errors from missing pairings.
+      const validCalls = toolCalls.filter((call) => {
+        const id = (call as { id?: unknown }).id;
+        return typeof id === "string" && id.length > 0;
+      });
+      if (validCalls.length > 0) {
+        messageParams!.tool_calls = validCalls;
+      }
     }
     if (hasReasoningContent) {
       messageParams!.reasoning_content = reasoningContent;
@@ -1661,7 +1696,7 @@ ${skillMd}
       visible: (content || reasoningContent || "").trim() ? true : false,
       createTime: now,
       updateTime: now,
-      meta: toolCalls ? { asThinking: true } : undefined,
+      meta: (toolCalls || (hasReasoningContent && !(content || "").trim())) ? { asThinking: true } : undefined,
     };
   }
 

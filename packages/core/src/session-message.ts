@@ -114,7 +114,7 @@ export function buildAssistantMessage(
     visible: (content || reasoningContent || "").trim() ? true : false,
     createTime: now,
     updateTime: now,
-    meta: toolCalls ? { asThinking: true } : undefined,
+    meta: (toolCalls || (hasReasoningContent && !(content || "").trim())) ? { asThinking: true } : undefined,
   };
 }
 
