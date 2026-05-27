@@ -274,17 +274,6 @@ providers.<provider>.apiKey
 > legacy API_KEY（仅在归属明确时使用）
 ```
 
-例如切换到 `gpt-4o`（属于 OpenAI）时，实际解析顺序为：
-
-```text
-providers.openai.apiKey
-> settings.json 中 env.OPENAI_API_KEY
-> 系统环境变量 OPENAI_API_KEY
-> legacy API_KEY（仅当 legacyApiKeyProvider = "openai" 且归属明确）
-```
-
-不会回退到 `DEEPSEEK_API_KEY`，也不会把 DeepSeek 的 Key 发送给 OpenAI。
-
 如果必须继续使用旧版通用 `API_KEY` / `BASE_URL`，建议显式声明归属：
 
 ```json
