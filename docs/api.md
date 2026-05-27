@@ -1,57 +1,57 @@
-# API 参考文档 (API Reference)
+# API Reference
 
-> **版本**: 1.1.0  
-> **包**: `@hex4code/core`
-
----
-
-## 概述
-
-`@hex4code/core` 是 Hex4Code 的核心引擎，提供会话管理、多模型路由、语义缓存、工具执行、流水线编排等能力。所有 API 均以 TypeScript 编写，支持 ES Module 导入。
+> **Version**: 1.1.0  
+> **Package**: `@hex4code/core`
 
 ---
 
-## 目录
+## Overview
 
-- [SessionManager (会话管理)](#sessionmanager-会话管理)
-- [SessionStore (会话持久化)](#sessionstore-会话持久化)
-- [ModelRouter (多模型路由)](#modelrouter-多模型路由)
-- [ProviderRegistry (供应商注册)](#providerregistry-供应商注册)
-- [ToolExecutor (工具执行)](#toolexecutor-工具执行)
-- [SemanticCache (语义缓存)](#semanticcache-语义缓存)
-- [DualTrit (三元压缩)](#dualtrit-三元压缩)
-- [PipelineOrchestration (流水线编排)](#pipelineorchestration-流水线编排)
-- [McpManager (MCP 管理)](#mcpmanager-mcp-管理)
-- [RAG 知识库](#rag-知识库)
-- [Skills 技能系统](#skills-技能系统)
+`@hex4code/core` is the core engine of Hex4Code, providing session management, multi-model routing, semantic cache, tool execution, pipeline orchestration, and more. All APIs are written in TypeScript and support ES Module imports.
 
 ---
 
-## SessionManager (会话管理)
+## Table of Contents
 
-会话管理是核心引擎，负责与 LLM 的完整交互循环（发送 → 接收 → 工具调用 → 继续）。
+- [SessionManager](#sessionmanager)
+- [SessionStore](#sessionstore)
+- [ModelRouter](#modelrouter)
+- [ProviderRegistry](#providerregistry)
+- [ToolExecutor](#toolexecutor)
+- [SemanticCache](#semanticcache)
+- [DualTrit](#dualtrit)
+- [PipelineOrchestration](#pipelineorchestration)
+- [McpManager](#mcpmanager)
+- [RAG Knowledge Base](#rag-knowledge-base)
+- [Skills System](#skills-system)
 
-### 导入
+---
+
+## SessionManager
+
+Session management is the core engine responsible for the complete interaction loop with LLMs (send → receive → tool call → continue).
+
+### Import
 
 ```typescript
 import { SessionManager } from "@hex4code/core/session";
 ```
 
-### 构造函数
+### Constructor
 
 ```typescript
 new SessionManager(projectRoot: string)
 ```
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `projectRoot` | `string` | 项目根目录路径 |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `projectRoot` | `string` | Project root directory path |
 
-### 主要方法
+### Main Methods
 
 #### `run()`
 
-启动一次对话交互循环。
+Start a conversation interaction loop.
 
 ```typescript
 async run(options: {
@@ -66,16 +66,16 @@ async run(options: {
 
 #### `compact()`
 
-压缩会话上下文，减少 Token 使用。
+Compress session context to reduce token usage.
 
 ```typescript
 compact(messages: SessionMessage[], maxTokens: number): SessionMessage[]
 ```
 
-### 相关类型
+### Related Types
 
 ```typescript
-// SessionEntry — 会话条目
+// SessionEntry — session entry
 interface SessionEntry {
   id: string;
   summary: string | null;
@@ -127,38 +127,38 @@ interface MessageMeta {
 
 ---
 
-## SessionStore (会话持久化)
+## SessionStore
 
-负责会话数据的文件系统读写。
+Responsible for reading and writing session data to the filesystem.
 
-### 导入
+### Import
 
 ```typescript
 import { SessionStore } from "@hex4code/core/session-store";
 ```
 
-### 主要方法
+### Main Methods
 
 ```typescript
 class SessionStore {
   constructor(projectRoot: string);
 
-  // 加载会话索引
+  // Load session index
   loadSessionsIndex(): SessionsIndex;
 
-  // 保存会话索引
+  // Save session index
   saveSessionsIndex(index: SessionsIndex): void;
 
-  // 追加一条消息到 JSONL 文件
+  // Append a message to a JSONL file
   appendSessionMessage(sessionId: string, message: SessionMessage): void;
 
-  // 批量保存会话消息
+  // Batch save session messages
   saveSessionMessages(sessionId: string, messages: SessionMessage[]): void;
 
-  // 删除会话消息文件
+  // Delete session message files
   removeSessionMessages(sessionIds: string[]): void;
 
-  // 获取存储路径信息
+  // Get storage path info
   getProjectStorage(): { projectCode: string; projectDir: string; sessionsIndexPath: string };
 }
 
@@ -172,11 +172,11 @@ interface SessionsIndex {
 
 ---
 
-## ModelRouter (多模型路由)
+## ModelRouter
 
-根据任务类型自动选择最优模型，按能力 + 成本排序。
+Automatically selects the optimal model based on task type, sorted by capability + cost.
 
-### 导入
+### Import
 
 ```typescript
 import { routeTask, calculateCost, getContextWindow, detectConfiguredProviders } from "@hex4code/core/models/model-router";
@@ -197,7 +197,7 @@ interface RouteResult {
   model: string;
   provider: string;
   baseURL?: string;
-  reason: string;  // 路由选择原因
+  reason: string;  // Routing reason
 }
 ```
 
@@ -208,29 +208,29 @@ function calculateCost(
   inputTokens: number,
   outputTokens: number,
   modelId: string
-): number  // 返回美元金额
+): number  // Returns USD amount
 ```
 
 ### getContextWindow()
 
 ```typescript
-function getContextWindow(modelId: string): number  // 返回 Token 数
+function getContextWindow(modelId: string): number  // Returns token count
 ```
 
 ### detectConfiguredProviders()
 
 ```typescript
 function detectConfiguredProviders(): string[]
-// 检测环境变量中配置了哪些 Provider
+// Detects which Providers are configured via environment variables
 ```
 
 ---
 
-## ProviderRegistry (供应商注册)
+## ProviderRegistry
 
-预注册的模型供应商信息管理，纯数据层，零外部依赖。
+Pre-registered model provider information management, pure data layer with zero external dependencies.
 
-### 导入
+### Import
 
 ```typescript
 import {
@@ -249,7 +249,7 @@ import {
 ### PROVIDERS
 
 ```typescript
-// 所有预注册的 Provider 配置数组
+// All pre-registered Provider configs
 const PROVIDERS: ProviderConfig[];
 
 interface ProviderConfig {
@@ -266,39 +266,39 @@ interface ProviderConfig {
 type ModelProvider = "deepseek" | "openai" | "qwen" | "gemini" | "ernie" | "minimax" | "glm" | "anthropic" | "groq";
 ```
 
-### 查询函数
+### Query Functions
 
 ```typescript
-// 按模型 ID 查找
+// Find by model ID
 getModelDef(modelId: string): ModelDef | undefined
 
-// 按 Provider ID 查找
+// Find by Provider ID
 getProvider(providerId: ModelProvider): ProviderConfig | undefined
 
-// 按模型查找其所属 Provider
+// Find provider by model
 getProviderByModel(modelId: string): ProviderConfig | undefined
 
-// 按能力过滤模型（按输入价格升序）
+// Filter models by capability (sorted by input price ascending)
 getModelsByCapability(capability: ModelCapability): ModelDef[]
 // capability: "code" | "reasoning" | "analysis" | "chat" | "fast"
 
-// 获取某 Provider 下的所有模型
+// Get all models under a Provider
 getModelsByProvider(providerId: ModelProvider): string[]
 
-// 判断模型是否具备某能力
+// Check if model has a capability
 modelHasCapability(modelId: string, capability: ModelCapability): boolean
 
-// 获取推荐的模型列表
+// Get recommended models for a task
 getRecommendedModels(task: "completion" | "generation" | "analysis" | "review" | "chat"): ModelDef[]
 
-// 获取默认模型
+// Get default model for task
 getDefaultModelForTask(task: "completion" | "generation" | "analysis" | "review" | "chat"): string
 ```
 
-### 支持的模型
+### Supported Models
 
-| Provider | 模型 | 上下文窗口 | 输入价格 | 输出价格 |
-|----------|------|-----------|---------|---------|
+| Provider | Model | Context Window | Input Price | Output Price |
+|----------|-------|---------------|-------------|--------------|
 | DeepSeek | deepseek-v4-pro | 1M | $0.50 | $2.00 |
 | DeepSeek | deepseek-v4-flash | 1M | $0.14 | $0.42 |
 | DeepSeek | deepseek-chat | 128K | $0.14 | $0.28 |
@@ -312,15 +312,15 @@ getDefaultModelForTask(task: "completion" | "generation" | "analysis" | "review"
 | Anthropic | claude-sonnet-4 | 200K | $3.00 | $15.00 |
 | Anthropic | claude-haiku-4 | 200K | $0.80 | $4.00 |
 
-*价格单位：美元/百万 Token*
+*Prices in USD per million tokens*
 
 ---
 
-## ToolExecutor (工具执行)
+## ToolExecutor
 
-执行 LLM 发出的工具调用（bash/read/write/edit/build/test/git/codeIndex/WebSearch/AskUserQuestion）。
+Executes tool calls issued by the LLM (bash/read/write/edit/build/test/git/codeIndex/WebSearch/AskUserQuestion).
 
-### 导入
+### Import
 
 ```typescript
 import { ToolExecutor, mergeTC, propagateTC } from "@hex4code/core/tools/executor";
@@ -336,7 +336,7 @@ class ToolExecutor {
     mcpManager?: McpManager
   );
 
-  // 批量执行工具调用
+  // Execute tool calls in batch
   async executeToolCalls(
     sessionId: string,
     toolCalls: unknown[],
@@ -345,30 +345,30 @@ class ToolExecutor {
 }
 ```
 
-### 内置工具
+### Built-in Tools
 
-| 工具名 | 处理模块 | 说明 |
-|--------|---------|------|
-| `bash` | `bash-handler` | 执行 Shell 命令 |
-| `read` | `read-handler` | 读取文件内容 |
-| `write` | `write-handler` | 写入/创建文件 |
-| `edit` | `edit-handler` | 编辑文件（精确替换） |
-| `build` | `build-handler` | 执行构建命令 |
-| `test` | `test-handler` | 执行测试 |
-| `git` | `git-handler` | Git 操作 |
-| `codeIndex` | `code-index-handler` | 代码索引搜索 |
-| `WebSearch` | `web-search-handler` | 网络搜索 |
-| `AskUserQuestion` | `ask-user-question-handler` | 向用户提问 |
+| Tool | Handler | Description |
+|------|---------|-------------|
+| `bash` | `bash-handler` | Execute shell commands |
+| `read` | `read-handler` | Read file contents |
+| `write` | `write-handler` | Write/create files |
+| `edit` | `edit-handler` | Edit files (precise replacement) |
+| `build` | `build-handler` | Execute build commands |
+| `test` | `test-handler` | Execute tests |
+| `git` | `git-handler` | Git operations |
+| `codeIndex` | `code-index-handler` | Code index search |
+| `WebSearch` | `web-search-handler` | Web search |
+| `AskUserQuestion` | `ask-user-question-handler` | Ask user questions |
 
-### 信任链 (TC)
+### Trust Chain (TC)
 
 ```typescript
 type TCType = "TC_NONE" | "TC_CARRY" | "TC_UNCERTAIN" | "TC_MIXED";
 
-// 合并多个 TC 状态
+// Merge multiple TC states
 function mergeTC(states: TCType[]): TCType
 
-// 传播上游 TC 到下游工具结果
+// Propagate upstream TC to downstream tool results
 function propagateTC(result: ToolExecutionResult, upstreamChain: TCLink[]): ToolExecutionResult
 
 interface TCLink {
@@ -390,7 +390,7 @@ interface ToolExecutionResult {
 }
 ```
 
-### 执行钩子
+### Execution Hooks
 
 ```typescript
 interface ToolExecutionHooks {
@@ -402,11 +402,11 @@ interface ToolExecutionHooks {
 
 ---
 
-## SemanticCache (语义缓存)
+## SemanticCache
 
-基于 n-gram 余弦相似度的 LLM 响应缓存，支持 TTL 过期和 LRU 淘汰。
+LLM response cache based on n-gram cosine similarity, with TTL expiration and LRU eviction.
 
-### 导入
+### Import
 
 ```typescript
 import { SemanticCache, getGlobalCache, resetGlobalCache } from "@hex4code/core/cache/semantic-cache";
@@ -418,36 +418,36 @@ import { SemanticCache, getGlobalCache, resetGlobalCache } from "@hex4code/core/
 class SemanticCache {
   constructor(config?: SemanticCacheConfig);
 
-  // 查找缓存命中
+  // Look up cache hit
   find(query: string, model: string): { hit: true; entry: CacheEntry } | { hit: false };
 
-  // 写入缓存
+  // Write to cache
   set(query: string, response: string, model: string, ttl?: number): void;
 
-  // 查找并自动记录命中率
+  // Look up and auto-record hit rate
   findWithStats(query: string, model: string): { hit: true; entry: CacheEntry } | { hit: false };
 
-  // 缓存统计
+  // Cache stats
   stats(): { totalEntries: number; totalModels: string[]; hitRate: number; hits: number; misses: number };
 
-  // 清空缓存
+  // Clear cache
   clear(): void;
 
-  // 清理过期条目
+  // Evict expired entries
   evictExpired(): number;
 
-  // LRU 淘汰
+  // LRU eviction
   evictLRU(targetCount: number): number;
 
-  // 释放资源
+  // Release resources
   dispose(): void;
 }
 
 interface SemanticCacheConfig {
-  threshold?: number;     // 相似度阈值，默认 0.85
-  maxEntries?: number;    // 最大条目数，默认 200
-  defaultTtl?: number;    // 默认 TTL (ms)，默认 3600000
-  persistPath?: string;   // 持久化路径
+  threshold?: number;     // Similarity threshold, default 0.85
+  maxEntries?: number;    // Max entries, default 200
+  defaultTtl?: number;    // Default TTL (ms), default 3600000
+  persistPath?: string;   // Persistence path
 }
 
 interface CacheEntry {
@@ -462,38 +462,38 @@ interface CacheEntry {
 }
 ```
 
-### 全局单例
+### Global Singleton
 
 ```typescript
-// 获取全局缓存（自动设置默认持久化路径 ~/.hex4code/cache/semantic-cache.json）
+// Get global cache (auto-sets default persistence path ~/.hex4code/cache/semantic-cache.json)
 getGlobalCache(config?: SemanticCacheConfig): SemanticCache
 
-// 重置全局缓存（主要用于测试）
+// Reset global cache (mainly for testing)
 resetGlobalCache(): void
 ```
 
 ---
 
-## DualTrit (三元压缩)
+## DualTrit
 
-将工具结果 JSON 压缩为紧凑格式，约节省 40% Token。
+Compresses tool result JSON into a compact format, saving approximately 40% on tokens.
 
-### 导入
+### Import
 
 ```typescript
 import { dualTritCompress, dualTritDecompress, estimateCompression } from "@hex4code/core/compression/dual-trit";
 ```
 
-### 函数
+### Functions
 
 ```typescript
-// 压缩：将标准 JSON 转为紧凑格式
+// Compress: convert standard JSON to compact format
 function dualTritCompress(payload: Record<string, unknown>): Record<string, unknown>
 
-// 解压缩：还原为标准 JSON
+// Decompress: restore to standard JSON
 function dualTritDecompress(payload: Record<string, unknown>): Record<string, unknown>
 
-// 估算压缩率
+// Estimate compression ratio
 function estimateCompression(payload: Record<string, unknown>): {
   before: number;
   after: number;
@@ -502,24 +502,24 @@ function estimateCompression(payload: Record<string, unknown>): {
 }
 ```
 
-### 字段映射
+### Field Mapping
 
-| 原字段 | 压缩后 | 说明 |
-|--------|--------|------|
-| `ok` | `k` | 状态 |
-| `name` | `n` | 工具名 |
-| `output` | `o` | 输出 |
-| `error` | `e` | 错误 |
-| `tcState` | `t` | 信任状态 |
-| `tcChain` | `c` | 信任链 |
+| Original Field | Compressed | Description |
+|----------------|------------|-------------|
+| `ok` | `k` | Status |
+| `name` | `n` | Tool name |
+| `output` | `o` | Output |
+| `error` | `e` | Error |
+| `tcState` | `t` | Trust state |
+| `tcChain` | `c` | Trust chain |
 
 ---
 
-## PipelineOrchestration (流水线编排)
+## PipelineOrchestration
 
-流水线编排系统，感知工具调用序列中的流水线模式。
+Pipeline orchestration system that detects pipeline patterns in tool call sequences.
 
-### 导入
+### Import
 
 ```typescript
 import {
@@ -533,10 +533,10 @@ import {
 } from "@hex4code/core/orchestration/hex4code-pipeline";
 ```
 
-### 流水线阶段
+### Pipeline Stages
 
-| 阶段 | 工具调用 |
-|------|---------|
+| Stage | Tool Call |
+|-------|-----------|
 | Build | `build` |
 | Test | `test` |
 | CodeIndex | `codeIndex` |
@@ -555,11 +555,11 @@ interface PipelineStage {
 
 ---
 
-## McpManager (MCP 管理)
+## McpManager
 
-Model Context Protocol 外部工具服务器管理。
+Model Context Protocol external tool server management.
 
-### 导入
+### Import
 
 ```typescript
 import { McpManager, McpServerStatus } from "@hex4code/core/mcp/mcp-manager";
@@ -569,25 +569,25 @@ import { McpManager, McpServerStatus } from "@hex4code/core/mcp/mcp-manager";
 
 ```typescript
 class McpManager {
-  // 准备服务器配置
+  // Prepare server configuration
   prepare(servers?: Record<string, McpServerConfig>): void;
 
-  // 初始化并连接所有服务器
+  // Initialize and connect all servers
   async initialize(servers?: Record<string, McpServerConfig>): Promise<void>;
 
-  // 获取 MCP 工具定义（用于生成 OpenAI tool schema）
+  // Get MCP tool definitions (for generating OpenAI tool schema)
   getMcpToolDefinitions(): Array<{ type: "function"; function: { ... } }>;
 
-  // 判断是否为 MCP 工具
+  // Check if a tool is an MCP tool
   isMcpTool(name: string): boolean;
 
-  // 执行 MCP 工具
+  // Execute MCP tool
   async executeMcpTool(name: string, args: Record<string, unknown>): Promise<{ ok: boolean; name: string; output?: string; error?: string }>;
 
-  // 获取所有服务器状态
+  // Get all server statuses
   getStatus(): McpServerStatus[];
 
-  // 断开所有连接
+  // Disconnect all connections
   disconnect(): void;
 }
 
@@ -603,11 +603,11 @@ interface McpServerStatus {
 
 ---
 
-## RAG 知识库
+## RAG Knowledge Base
 
-基于历史会话的检索增强生成。
+Retrieval-augmented generation based on historical sessions.
 
-### 导入
+### Import
 
 ```typescript
 import {
@@ -620,35 +620,35 @@ import {
 } from "@hex4code/core/knowledge/session-rag";
 ```
 
-### 函数
+### Functions
 
 ```typescript
-// 从所有历史 JSONL 会话重建知识库
+// Rebuild knowledge base from all historical JSONL sessions
 rebuildKnowledgeBase(): { chunks: number; sessions: number }
 
-// 搜索相关知识
+// Search relevant knowledge
 searchKnowledge(query: string, topK?: number): Array<{ chunk: KnowledgeChunk; score: number }>
 
-// 格式化搜索结果
+// Format search results
 formatKnowledgeResults(results: Array<{ chunk: KnowledgeChunk; score: number }>): string
 
-// 提取错误→修复模式
+// Extract error→fix patterns
 extractErrorPatterns(): ErrorPattern[]
 
-// 搜索错误模式
+// Search error patterns
 searchPatterns(query: string, topK?: number): ErrorPattern[]
 
-// 获取知识库统计
+// Get knowledge base stats
 getKnowledgeStats(): { chunks: number; sessions: number }
 ```
 
 ---
 
-## Skills 技能系统
+## Skills System
 
-用户级和项目级自定义技能配置。
+User-level and project-level custom skill configuration.
 
-### 导入
+### Import
 
 ```typescript
 import {
@@ -660,20 +660,20 @@ import {
 } from "@hex4code/core/session-skill";
 ```
 
-### 函数
+### Functions
 
 ```typescript
-// 解析技能路径（支持 ~/  ./  绝对路径）
+// Resolve skill path (supports ~/  ./  absolute paths)
 resolveSkillPath(skillPath: string, projectRoot: string): string
 
-// 读取技能元信息（从 gray-matter YAML front matter）
+// Read skill metadata (from gray-matter YAML front matter)
 readSkillInfo(skillPath: string, displayPath: string, fallbackName: string): SkillInfo
 
-// 获取技能唯一键
+// Get skill unique key
 getSkillKey(skill: Pick<SkillInfo, "path">): string
 getSkillKeyByName(name: string): string
 
-// 去重技能列表
+// Deduplicate skill list
 dedupeSkills(skills?: SkillInfo[]): SkillInfo[] | undefined
 
 interface SkillInfo {
@@ -685,11 +685,11 @@ interface SkillInfo {
 
 ---
 
-## ProviderClient (客户端工厂)
+## ProviderClient
 
-OpenAI 兼容客户端工厂。
+OpenAI-compatible client factory.
 
-### 导入
+### Import
 
 ```typescript
 import { createClient } from "@hex4code/core/models/provider-client";

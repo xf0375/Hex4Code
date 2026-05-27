@@ -119,8 +119,7 @@ best innovations emerge when they are shared freely.
 Hex4Code — AI-powered coding assistant with multi-model routing,
 semantic cache, and pipeline orchestration.
 
-Copyright © 2026 郑州威光半导体有限公司
-(Zhengzhou Weiguang Semiconductor Co., Ltd.)
+Copyright © 2026 Zhengzhou Weiguang Semiconductor Co., Ltd.
 
 Licensed under the Apache License, Version 2.0.
 You may obtain a copy of the License at:

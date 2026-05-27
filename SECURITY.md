@@ -1,39 +1,39 @@
-# 安全策略 (Security Policy)
+# Security Policy
 
-## 支持的版本
+## Supported Versions
 
-| 版本 | 支持状态 |
-|------|----------|
-| 1.1.x | ✅ 活跃支持 |
+| Version | Status         |
+|---------|----------------|
+| 1.1.x   | ✅ Active support |
 
-## 报告漏洞
+## Reporting a Vulnerability
 
-如果你发现了安全漏洞，**请不要在公开的 Issue 中报告**。
+If you discover a security vulnerability, **please do not report it in a public Issue**.
 
-请通过以下方式私下报告：
+Instead, report it privately through one of these channels:
 
-1. 发送邮件至项目维护者，包含漏洞详情
-2. 或在 AtomGit 仓库中使用私有报告功能
+1. Send an email to the project maintainers with the vulnerability details
+2. Use the private reporting feature on the AtomGit repository
 
-## 漏洞报告内容
+## Vulnerability Report Contents
 
-请提供以下信息：
+Please include the following information:
 
-- **受影响组件**：core / cli / vscode
-- **漏洞类型**：如 XXE、注入、权限绕过、敏感信息泄露等
-- **复现步骤**：详细描述如何触发
-- **影响范围**：评估潜在影响
-- **修复建议**（可选）：任何建议的修复方案
+- **Affected component**: core / cli / vscode
+- **Vulnerability type**: e.g., XXE, injection, privilege escalation, sensitive information disclosure
+- **Steps to reproduce**: Detailed instructions to trigger the vulnerability
+- **Impact scope**: Assessment of potential impact
+- **Remediation suggestions** (optional): Any suggested fixes
 
-## 响应流程
+## Response Process
 
-1. **确认收到**：72 小时内确认收到报告
-2. **评估分析**：7 个工作日内完成初步评估
-3. **修复发布**：确认漏洞后尽快发布修复版本
-4. **公开披露**：修复发布后，会在 CHANGELOG 中披露（不包含可利用的细节）
+1. **Acknowledgement**: Confirmation of receipt within 72 hours
+2. **Assessment**: Initial evaluation within 7 business days
+3. **Fix release**: Fix published as soon as possible after confirmation
+4. **Public disclosure**: After the fix is released, disclosed in the CHANGELOG (without exploitable details)
 
-## 安全最佳实践
+## Security Best Practices
 
-- **API 密钥**：不要在代码中硬编码 API 密钥，使用配置文件或环境变量
-- **配置文件**：`settings.json` 中包含敏感信息，请勿提交到版本控制系统
-- **依赖更新**：定期运行 `npm audit` 检查依赖安全漏洞
+- **API Keys**: Do not hardcode API keys in code; use configuration files or environment variables
+- **Configuration**: `settings.json` contains sensitive information; do not commit it to version control
+- **Dependency updates**: Regularly run `npm audit` to check for dependency security vulnerabilities

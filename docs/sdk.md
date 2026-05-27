@@ -1,37 +1,37 @@
-# SDK 使用指南 (SDK Guide)
+# SDK Guide
 
-> **版本**: 1.1.0
-
----
-
-## 概述
-
-Hex4Code SDK 面向希望在自有应用中集成 AI 编码能力的开发者。SDK 核心包 `@hex4code/core` 提供完整的会话管理、多模型路由、工具执行等能力。
+> **Version**: 1.1.0
 
 ---
 
-## 目录
+## Overview
 
-- [安装](#安装)
-- [快速开始](#快速开始)
-- [基础用法](#基础用法)
-  - [创建会话](#创建会话)
-  - [发送用户消息](#发送用户消息)
-  - [处理工具调用](#处理工具调用)
-  - [持久化存储](#持久化存储)
-- [高级用法](#高级用法)
-  - [多模型路由](#多模型路由)
-  - [语义缓存](#语义缓存)
-  - [知识库 (RAG)](#知识库-rag)
-  - [MCP 协议集成](#mcp-协议集成)
-  - [Skills 技能系统](#skills-技能系统)
-  - [流水线编排](#流水线编排)
-- [完整示例](#完整示例)
-- [TypeScript 类型](#typescript-类型)
+The Hex4Code SDK is designed for developers who want to integrate AI coding capabilities into their own applications. The core SDK package `@hex4code/core` provides complete session management, multi-model routing, tool execution, and more.
 
 ---
 
-## 安装
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Basic Usage](#basic-usage)
+  - [Creating a Session](#creating-a-session)
+  - [Sending User Messages](#sending-user-messages)
+  - [Handling Tool Calls](#handling-tool-calls)
+  - [Persistent Storage](#persistent-storage)
+- [Advanced Usage](#advanced-usage)
+  - [Multi-Model Routing](#multi-model-routing)
+  - [Semantic Cache](#semantic-cache)
+  - [Knowledge Base (RAG)](#knowledge-base-rag)
+  - [MCP Protocol Integration](#mcp-protocol-integration)
+  - [Skills System](#skills-system)
+  - [Pipeline Orchestration](#pipeline-orchestration)
+- [Complete Example](#complete-example)
+- [TypeScript Types](#typescript-types)
+
+---
+
+## Installation
 
 ### npm
 
@@ -39,9 +39,9 @@ Hex4Code SDK 面向希望在自有应用中集成 AI 编码能力的开发者。
 npm install @hex4code/core
 ```
 
-### 从源码使用（开发模式）
+### From Source (Development Mode)
 
-在 Hex4Code 的 monorepo 中，`@hex4code/core` 以 TypeScript 源码形式直接引用：
+In the Hex4Code monorepo, `@hex4code/core` is referenced directly as TypeScript source:
 
 ```json
 // tsconfig.json
@@ -56,22 +56,22 @@ npm install @hex4code/core
 
 ---
 
-## 快速开始
+## Quick Start
 
 ```typescript
 import { SessionManager } from "@hex4code/core/session";
 import { createClient } from "@hex4code/core/models/provider-client";
 
-// 1. 创建 OpenAI 兼容客户端
+// 1. Create an OpenAI-compatible client
 const { client, model } = createClient("deepseek", "your-api-key");
 
-// 2. 创建会话管理器
+// 2. Create a session manager
 const session = new SessionManager("/path/to/project");
 
-// 3. 发起对话
+// 3. Start a conversation
 const result = await session.run({
   messages: [
-    { role: "user", content: "请帮我创建一个 TypeScript 工具函数" }
+    { role: "user", content: "Create a TypeScript utility function" }
   ],
   sessionId: crypto.randomUUID(),
   createOpenAIClient: () => ({ client, model }),
@@ -82,19 +82,19 @@ console.log(result.messages);
 
 ---
 
-## 基础用法
+## Basic Usage
 
-### 创建会话
+### Creating a Session
 
 ```typescript
 import { SessionManager } from "@hex4code/core/session";
 import { SessionStore } from "@hex4code/core/session-store";
 import OpenAI from "openai";
 
-// 初始化 SessionManager
+// Initialize SessionManager
 const sessionManager = new SessionManager(projectRoot);
 
-// 配置 OpenAI 客户端工厂
+// Configure OpenAI client factory
 function createOpenAIClient() {
   const client = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
@@ -109,29 +109,29 @@ function createOpenAIClient() {
 }
 ```
 
-### 发送用户消息
+### Sending User Messages
 
 ```typescript
-// 调用 run() 启动交互循环
+// Call run() to start the interaction loop
 const result = await sessionManager.run({
   messages: [
     {
       role: "user",
-      content: "写一个 Python 脚本读取 CSV 并输出统计信息"
+      content: "Write a Python script to read a CSV and output statistics"
     }
   ],
   sessionId: "session-001",
   createOpenAIClient,
 });
 
-// result 包含完整的对话历史
-console.log("消息数:", result.messages.length);
-console.log("Token 用量:", result.totalUsage);
+// result contains the full conversation history
+console.log("Message count:", result.messages.length);
+console.log("Token usage:", result.totalUsage);
 ```
 
-### 处理工具调用
+### Handling Tool Calls
 
-ToolExecutor 自动在 `run()` 内部处理工具调用循环。如需手动使用：
+ToolExecutor automatically handles the tool call loop inside `run()`. To use it manually:
 
 ```typescript
 import { ToolExecutor } from "@hex4code/core/tools/executor";
@@ -143,63 +143,63 @@ const results = await executor.executeToolCalls(
   sessionId,
   toolCalls,
   {
-    onProcessStart: (pid, cmd) => console.log(`启动: ${cmd}`),
-    onProcessExit: (pid) => console.log(`进程退出: ${pid}`),
+    onProcessStart: (pid, cmd) => console.log(`Started: ${cmd}`),
+    onProcessExit: (pid) => console.log(`Process exited: ${pid}`),
     shouldStop: () => false,
   }
 );
 
 for (const exec of results) {
-  console.log(`工具: ${exec.result.name}, 成功: ${exec.result.ok}`);
+  console.log(`Tool: ${exec.result.name}, Success: ${exec.result.ok}`);
 }
 ```
 
-### 持久化存储
+### Persistent Storage
 
 ```typescript
 import { SessionStore } from "@hex4code/core/session-store";
 
 const store = new SessionStore(projectRoot);
 
-// 加载会话索引
+// Load session index
 const index = store.loadSessionsIndex();
 
-// 保存消息（JSONL 格式）
+// Save messages (JSONL format)
 store.saveSessionMessages("session-001", messages);
 
-// 追加消息
+// Append a message
 store.appendSessionMessage("session-001", {
   role: "assistant",
-  content: "这是新的回复",
+  content: "This is a new reply",
 });
 
-// 删除会话
+// Delete session
 store.removeSessionMessages(["session-001"]);
 ```
 
 ---
 
-## 高级用法
+## Advanced Usage
 
-### 多模型路由
+### Multi-Model Routing
 
 ```typescript
 import { routeTask, detectConfiguredProviders } from "@hex4code/core/models/model-router";
 
-// 检测可用的 Provider
+// Detect available providers
 const providers = detectConfiguredProviders();
-console.log("已配置:", providers); // ["deepseek", "qwen"]
+console.log("Configured:", providers); // ["deepseek", "qwen"]
 
-// 按任务类型路由
+// Route by task type
 const route = routeTask("generation", providers, settings);
-console.log(`任务: generation → ${route.model} (${route.reason})`);
+console.log(`Task: generation → ${route.model} (${route.reason})`);
 
-// 计算成本
+// Calculate cost
 const cost = calculateCost(10000, 2000, "deepseek-chat");
-console.log(`预估成本: $${cost.toFixed(4)}`);
+console.log(`Estimated cost: $${cost.toFixed(4)}`);
 ```
 
-### 语义缓存
+### Semantic Cache
 
 ```typescript
 import { getGlobalCache } from "@hex4code/core/cache/semantic-cache";
@@ -207,11 +207,11 @@ import { getGlobalCache } from "@hex4code/core/cache/semantic-cache";
 const cache = getGlobalCache({
   threshold: 0.85,
   maxEntries: 500,
-  defaultTtl: 7200000,  // 2 小时
+  defaultTtl: 7200000,  // 2 hours
   persistPath: "./my-cache.json",
 });
 
-// 使用缓存
+// Using the cache
 async function cachedCompletion(query: string): Promise<string> {
   const result = cache.findWithStats(query, "deepseek-chat");
   if (result.hit) {
@@ -224,12 +224,12 @@ async function cachedCompletion(query: string): Promise<string> {
   return response;
 }
 
-// 查看统计
+// View stats
 const stats = cache.stats();
-console.log(`命中率: ${(stats.hitRate * 100).toFixed(1)}%`);
+console.log(`Hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
 ```
 
-### 知识库 (RAG)
+### Knowledge Base (RAG)
 
 ```typescript
 import {
@@ -238,32 +238,32 @@ import {
   formatKnowledgeResults,
 } from "@hex4code/core/knowledge/session-rag";
 
-// 构建知识库
+// Build the knowledge base
 const { chunks, sessions } = rebuildKnowledgeBase();
-console.log(`加载 ${chunks} 个知识块 (${sessions} 个会话)`);
+console.log(`Loaded ${chunks} knowledge chunks (${sessions} sessions)`);
 
-// 搜索相关知识
-const results = searchKnowledge("如何配置多模型路由", 5);
+// Search related knowledge
+const results = searchKnowledge("how to configure multi-model routing", 5);
 console.log(formatKnowledgeResults(results));
 
-// 错误模式搜索
+// Error pattern search
 import { extractErrorPatterns, searchPatterns } from "@hex4code/core/knowledge/session-rag";
 
 const patterns = searchPatterns("TypeError undefined", 3);
 for (const p of patterns) {
   console.log(`[${p.finalStatus}] ${p.errorType}`);
-  console.log(`  修复: ${p.fixSequence.join(" → ")}`);
+  console.log(`  Fix: ${p.fixSequence.join(" → ")}`);
 }
 ```
 
-### MCP 协议集成
+### MCP Protocol Integration
 
 ```typescript
 import { McpManager } from "@hex4code/core/mcp/mcp-manager";
 
 const mcpManager = new McpManager();
 
-// 配置 MCP 服务器
+// Configure MCP servers
 const servers = {
   "filesystem": {
     command: "npx",
@@ -277,24 +277,24 @@ const servers = {
   }
 };
 
-// 初始化（连接所有服务器）
+// Initialize (connect all servers)
 await mcpManager.initialize(servers);
 
-// 获取可用工具
+// Get available tools
 const tools = mcpManager.getMcpToolDefinitions();
-console.log("MCP 工具:", tools.map(t => t.function.name));
+console.log("MCP tools:", tools.map(t => t.function.name));
 
-// 查看状态
+// View status
 const status = mcpManager.getStatus();
 for (const s of status) {
   console.log(`${s.name}: ${s.status} (${s.toolCount} tools)`);
 }
 
-// 断开连接
+// Disconnect
 mcpManager.disconnect();
 ```
 
-### Skills 技能系统
+### Skills System
 
 ```typescript
 import {
@@ -303,28 +303,28 @@ import {
   dedupeSkills,
 } from "@hex4code/core/session-skill";
 
-// 技能目录结构
-// ~/.agents/skills/          ← 用户级
+// Skill directory structure
+// ~/.agents/skills/          ← User-level
 //   my-custom-skill.md
-// ./.agents/skills/          ← 项目级
+// ./.agents/skills/          ← Project-level
 //   project-skill.md
 
 const projectRoot = "/path/to/project";
 
-// 读取技能元信息
+// Read skill metadata
 const skillPath = resolveSkillPath("~/.agents/skills/my-custom-skill.md", projectRoot);
 const skill = readSkillInfo(skillPath, "~/.agents/skills/my-custom-skill.md", "my-custom-skill");
 
-console.log(`技能: ${skill.name}`);
-console.log(`描述: ${skill.description}`);
+console.log(`Skill: ${skill.name}`);
+console.log(`Description: ${skill.description}`);
 
-// 去重
+// Deduplicate
 const allSkills = [skill1, skill2, duplicateSkill];
 const unique = dedupeSkills(allSkills);
-console.log(`去重后: ${unique?.length} 个技能`);
+console.log(`After dedup: ${unique?.length} skills`);
 ```
 
-### 流水线编排
+### Pipeline Orchestration
 
 ```typescript
 import {
@@ -332,7 +332,7 @@ import {
   buildPipelineSummary,
 } from "@hex4code/core/orchestration/hex4code-pipeline";
 
-// 检测工具调用序列中的流水线模式
+// Detect pipeline patterns in tool call sequences
 const pipeline = detectPipeline([
   { id: "1", type: "function", function: { name: "build", arguments: "{}" } },
   { id: "2", type: "function", function: { name: "test", arguments: "{}" } },
@@ -344,7 +344,7 @@ if (pipeline) {
   for (const stage of pipeline) {
     console.log(`${stage.symbol} → ${stage.name}`);
   }
-  // 输出:
+  // Output:
   //   build → Build
   //   test → Test
   //   codeIndex → CodeIndex
@@ -354,7 +354,7 @@ if (pipeline) {
 
 ---
 
-## 完整示例
+## Complete Example
 
 ```typescript
 import { SessionManager } from "@hex4code/core/session";
@@ -369,11 +369,11 @@ async function main() {
   const projectRoot = process.cwd();
   const sessionId = crypto.randomUUID();
 
-  // 1. 检测可用 Provider
+  // 1. Detect available providers
   const providers = detectConfiguredProviders();
-  console.log(`可用 Provider: ${providers.join(", ")}`);
+  console.log(`Available providers: ${providers.join(", ")}`);
 
-  // 2. 创建 OpenAI 客户端
+  // 2. Create OpenAI client
   const openai = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
     baseURL: "https://api.deepseek.com",
@@ -386,40 +386,40 @@ async function main() {
     thinkingEnabled: false,
   });
 
-  // 3. 初始化 MCP (可选)
+  // 3. Initialize MCP (optional)
   const mcpManager = new McpManager();
 
-  // 4. 初始化语义缓存
+  // 4. Initialize semantic cache
   const cache = getGlobalCache({ persistPath: undefined });
 
-  // 5. 初始化 SessionManager
+  // 5. Initialize SessionManager
   const sessionManager = new SessionManager(projectRoot);
 
-  // 6. 发起对话
+  // 6. Start a conversation
   try {
     const result = await sessionManager.run({
       messages: [
         {
           role: "user",
-          content: "分析项目中最大的 TypeScript 文件，并给出重构建议"
+          content: "Analyze the largest TypeScript file in the project and suggest refactoring"
         }
       ],
       sessionId,
       createOpenAIClient: createClient,
       mcpManager,
-      agentMode: "hex4",  // 使用流水线模式
+      agentMode: "hex4",  // Use pipeline mode
     });
 
-    // 7. 输出结果
-    console.log(`\n=== 对话完成 ===`);
-    console.log(`消息数: ${result.messages.length}`);
+    // 7. Output results
+    console.log(`\n=== Conversation Complete ===`);
+    console.log(`Message count: ${result.messages.length}`);
 
-    // 8. 持久化
+    // 8. Persist
     const store = new SessionStore(projectRoot);
     store.saveSessionMessages(sessionId, result.messages);
-    console.log(`已保存会话: ${sessionId}`);
+    console.log(`Session saved: ${sessionId}`);
   } catch (error) {
-    console.error("会话出错:", error);
+    console.error("Session error:", error);
   } finally {
     cache.dispose();
     mcpManager.disconnect();
@@ -431,12 +431,12 @@ main();
 
 ---
 
-## TypeScript 类型
+## TypeScript Types
 
-SDK 提供完整的 TypeScript 类型定义，主要类型包括：
+The SDK provides complete TypeScript type definitions. Key types include:
 
 ```typescript
-// 会话相关
+// Session types
 import type {
   SessionEntry,
   SessionMessage,
@@ -448,7 +448,7 @@ import type {
   SessionsIndex,
 } from "@hex4code/core/session-types";
 
-// 设置相关
+// Settings types
 import type {
   Hex4codeSettings,
   ResolvedHex4codeSettings,
@@ -456,7 +456,7 @@ import type {
   TaskType,
 } from "@hex4code/core/settings";
 
-// 模型相关
+// Model types
 import type {
   ModelProvider,
   ModelDef,
@@ -465,7 +465,7 @@ import type {
   RouteResult,
 } from "@hex4code/core/models/model-router";
 
-// 工具执行
+// Tool execution
 import type {
   ToolCall,
   ToolExecutionResult,
@@ -478,9 +478,9 @@ import type {
 import type { McpServerConfig } from "@hex4code/core/settings";
 import type { McpServerStatus } from "@hex4code/core/mcp/mcp-manager";
 
-// 缓存
+// Cache
 import type { CacheEntry, SemanticCacheConfig } from "@hex4code/core/cache/semantic-cache";
 
-// 知识库
+// Knowledge base
 import type { KnowledgeChunk, ErrorPattern } from "@hex4code/core/knowledge/session-rag";
 ```

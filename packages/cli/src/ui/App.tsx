@@ -119,7 +119,7 @@ export function App({
     const { setAgentMode, getAgentMode } = require("@hex4code/core/agent-mode");
     setAgentMode(effectiveMode);
     process.stderr.write(
-      `[HEX4] 项目模式: ${getModeLabel(effectiveMode)}${validatedOverride ? " (env override)" : ""}\n`,
+      `[HEX4] Project mode: ${getModeLabel(effectiveMode)}${validatedOverride ? " (env override)" : ""}\n`,
     );
 
     return new SessionManager({
@@ -587,11 +587,11 @@ export function App({
           `Configured: ${configured.join(", ") || chalk.yellow("none")}\n`,
         );
         const tasks = [
-          { id: "completion", label: "补全 (Completion)" },
-          { id: "generation", label: "生成 (Generation)" },
-          { id: "analysis", label: "分析 (Analysis)" },
-          { id: "review", label: "审查 (Review)" },
-          { id: "chat", label: "对话 (Chat)" },
+          { id: "completion", label: "Completion" },
+          { id: "generation", label: "Generation" },
+          { id: "analysis", label: "Analysis" },
+          { id: "review", label: "Review" },
+          { id: "chat", label: "Chat" },
         ];
         for (const task of tasks) {
           const recs = getSmartRecommendation(

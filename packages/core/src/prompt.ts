@@ -254,7 +254,10 @@ type PromptToolOptions = {
   webSearchEnabled?: boolean;
 };
 
-function readToolDocs(extensionRoot: string, options: PromptToolOptions = {}): string {
+function readToolDocs(
+  extensionRoot: string,
+  options: PromptToolOptions = {},
+): string {
   const toolsDir = path.join(extensionRoot, "templates", "tools");
   if (!fs.existsSync(toolsDir)) {
     return "";
@@ -269,7 +272,9 @@ function readToolDocs(extensionRoot: string, options: PromptToolOptions = {}): s
       try {
         const template = fs.readFileSync(fullPath, "utf8");
         const content = entry.endsWith(".ejs")
-          ? ejs.render(template, { supportsMultimodal: supportsMultimodal(options.model ?? "") })
+          ? ejs.render(template, {
+              supportsMultimodal: supportsMultimodal(options.model ?? ""),
+            })
           : template;
         return content.trim();
       } catch {
@@ -285,9 +290,14 @@ function getCurrentDatePrompt(date = new Date()): string {
   return `今天是${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日。随着对话的进行，时间在流逝。`;
 }
 
-export function getSystemPrompt(projectRoot: string, options: PromptToolOptions = {}): string {
+export function getSystemPrompt(
+  projectRoot: string,
+  options: PromptToolOptions = {},
+): string {
   const toolDocs = readToolDocs(getExtensionRoot(), options);
-  const basePrompt = toolDocs ? `${SYSTEM_PROMPT_BASE}\n\n# Available Tools\n\n${toolDocs}` : SYSTEM_PROMPT_BASE;
+  const basePrompt = toolDocs
+    ? `${SYSTEM_PROMPT_BASE}\n\n# Available Tools\n\n${toolDocs}`
+    : SYSTEM_PROMPT_BASE;
   return `${basePrompt}\n\n${getCurrentDatePrompt()}\n\n${getRuntimeContext(projectRoot)}`;
 }
 
@@ -310,7 +320,8 @@ export function getCompactPrompt(sessionMessages: SessionMessage[]): string {
 function getRuntimeContext(projectRoot: string): string {
   const uname = getUnameInfo();
   const shellPath = getShellPathInfo();
-  const shellModeOpts = process.platform === "win32" ? { "shell mode": "git-bash" } : {};
+  const shellModeOpts =
+    process.platform === "win32" ? { "shell mode": "git-bash" } : {};
   const runtimeVersions = getRuntimeVersionInfo();
   const env = {
     "root path": projectRoot,
@@ -429,7 +440,10 @@ export type ToolDefinition = {
   };
 };
 
-export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDefinition[] = []): ToolDefinition[] {
+export function getTools(
+  _options: PromptToolOptions = {},
+  externalTools: ToolDefinition[] = [],
+): ToolDefinition[] {
   const tools: ToolDefinition[] = [
     {
       type: "function",
@@ -465,7 +479,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
           properties: {
             questions: {
               type: "array",
-              description: "Questions to present to the user. Usually only one question is needed at a time.",
+              description:
+                "Questions to present to the user. Usually only one question is needed at a time.",
               items: {
                 type: "object",
                 properties: {
@@ -475,11 +490,13 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
                   },
                   multiSelect: {
                     type: "boolean",
-                    description: "Whether the user may choose multiple options.",
+                    description:
+                      "Whether the user may choose multiple options.",
                   },
                   options: {
                     type: "array",
-                    description: "A list of predefined options for the user to choose from.",
+                    description:
+                      "A list of predefined options for the user to choose from.",
                     items: {
                       type: "object",
                       properties: {
@@ -510,7 +527,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
       type: "function",
       function: {
         name: "read",
-        description: "Read files from the filesystem (text, images, PDFs, notebooks).",
+        description:
+          "Read files from the filesystem (text, images, PDFs, notebooks).",
         parameters: {
           type: "object",
           properties: {
@@ -528,7 +546,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
             },
             pages: {
               type: "string",
-              description: 'Page range for PDF files (e.g., "1-5", "3", "10-20"). Only applicable to PDF files.',
+              description:
+                'Page range for PDF files (e.g., "1-5", "3", "10-20"). Only applicable to PDF files.',
             },
           },
           required: ["file_path"],
@@ -540,7 +559,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
       type: "function",
       function: {
         name: "write",
-        description: "Create files or overwrite them with a complete string payload. Prefer edit for existing files.",
+        description:
+          "Create files or overwrite them with a complete string payload. Prefer edit for existing files.",
         parameters: {
           type: "object",
           properties: {
@@ -550,7 +570,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
             },
             content: {
               type: "string",
-              description: "Complete file content as a single string. Serialize JSON documents before writing.",
+              description:
+                "Complete file content as a single string. Serialize JSON documents before writing.",
             },
           },
           required: ["file_path", "content"],
@@ -568,7 +589,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
           properties: {
             file_path: {
               type: "string",
-              description: "Absolute path to file. Optional when snippet_id is provided.",
+              description:
+                "Absolute path to file. Optional when snippet_id is provided.",
             },
             snippet_id: {
               type: "string",
@@ -577,7 +599,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
             },
             old_string: {
               type: "string",
-              description: "Exact text to replace inside the file or snippet scope",
+              description:
+                "Exact text to replace inside the file or snippet scope",
             },
             new_string: {
               type: "string",
@@ -585,12 +608,14 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
             },
             replace_all: {
               type: "boolean",
-              description: "Replace all occurences of old_string (default false)",
+              description:
+                "Replace all occurences of old_string (default false)",
               default: false,
             },
             expected_occurrences: {
               type: "number",
-              description: "Expected number of matches, especially useful as a safety check with replace_all",
+              description:
+                "Expected number of matches, especially useful as a safety check with replace_all",
             },
           },
           required: ["old_string", "new_string"],
@@ -638,7 +663,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
           },
           target: {
             type: "string",
-            description: "Make target to build (e.g., 'test_all', 'all', 'clean'). Omit for default target.",
+            description:
+              "Make target to build (e.g., 'test_all', 'all', 'clean'). Omit for default target.",
           },
           clean: {
             type: "boolean",
@@ -647,7 +673,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
           },
           flags: {
             type: "string",
-            description: 'Extra flags to pass to make (e.g., "CC=clang", "OPT=-O3"). Passed as-is after the target.',
+            description:
+              'Extra flags to pass to make (e.g., "CC=clang", "OPT=-O3"). Passed as-is after the target.',
           },
         },
         required: [],
@@ -713,7 +740,8 @@ export function getTools(_options: PromptToolOptions = {}, externalTools: ToolDe
           },
           filter: {
             type: "string",
-            description: "Test name filter string (passed as first argument to the test binary).",
+            description:
+              "Test name filter string (passed as first argument to the test binary).",
           },
           timeout: {
             type: "number",

@@ -1,5 +1,5 @@
 (function () {
-  const ATTACHMENT_LABEL = "粘贴的图像";
+  const ATTACHMENT_LABEL = "Pasted image";
   const PREVIEW_OFFSET = 10;
 
   function createElement(tagName, className) {
@@ -135,13 +135,13 @@
       );
       wrapper.tabIndex = 0;
       wrapper.setAttribute("role", "button");
-      wrapper.setAttribute("aria-label", ATTACHMENT_LABEL + " (删除)");
+      wrapper.setAttribute("aria-label", ATTACHMENT_LABEL + " (Remove)");
       wrapper.draggable = true;
 
       const removeButton = createElement("a", "monaco-button codicon codicon-close");
       removeButton.tabIndex = -1;
       removeButton.setAttribute("role", "button");
-      removeButton.setAttribute("aria-label", "从上下文中移除");
+      removeButton.setAttribute("aria-label", "Remove from context");
       removeButton.href = "#";
       removeButton.textContent = "×";
       removeButton.addEventListener("click", (event) => {

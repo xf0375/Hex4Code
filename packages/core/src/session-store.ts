@@ -2,18 +2,24 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
-import type { SessionsIndex, SessionEntry, SessionStatus, SessionMessage } from "./session-types";
+import type {
+  SessionsIndex,
+  SessionEntry,
+  SessionStatus,
+  SessionMessage,
+} from "./session-types";
 
 /**
- * ── 会话持久化存储 — 独立类 ─────────────────────────
+ * ── Session persistence storage — independent class ──
  *
- * 提取自 SessionManager，封装所有与文件系统交互的
- * 会话读写逻辑。实例化时需传入 projectRoot。
+ * Extracted from SessionManager, encapsulates all session
+ * read/write logic interacting with the filesystem.
+ * Requires projectRoot to be passed at instantiation.
  */
 export class SessionStore {
   constructor(private readonly projectRoot: string) {}
 
-  /* ── 路径工具 ───────────────────────────────────── */
+  /* ── Path utilities ────────────────────────────────── */
 
   getProjectCode(projectRoot: string): string {
     return projectRoot.replace(/[\\/]/g, "-").replace(/:/g, "");
@@ -25,7 +31,12 @@ export class SessionStore {
     sessionsIndexPath: string;
   } {
     const projectCode = this.getProjectCode(this.projectRoot);
-    const projectDir = path.join(os.homedir(), ".hex4code", "projects", projectCode);
+    const projectDir = path.join(
+      os.homedir(),
+      ".hex4code",
+      "projects",
+      projectCode,
+    );
     const sessionsIndexPath = path.join(projectDir, "sessions-index.json");
     return { projectCode, projectDir, sessionsIndexPath };
   }
@@ -73,7 +84,11 @@ export class SessionStore {
       })),
       originalPath: this.projectRoot,
     };
-    fs.writeFileSync(sessionsIndexPath, JSON.stringify(normalized, null, 2), "utf8");
+    fs.writeFileSync(
+      sessionsIndexPath,
+      JSON.stringify(normalized, null, 2),
+      "utf8",
+    );
   }
 
   /* ── Session Messages ────────────────────────────── */
@@ -105,28 +120,48 @@ export class SessionStore {
   saveSessionMessages(sessionId: string, messages: SessionMessage[]): void {
     this.ensureProjectDir();
     const messagePath = this.getSessionMessagesPath(sessionId);
-    const payload = messages.map((message) => JSON.stringify(message)).join("\n");
+    const payload = messages
+      .map((message) => JSON.stringify(message))
+      .join("\n");
     fs.writeFileSync(messagePath, payload ? `${payload}\n` : "", "utf8");
   }
 
   /* ── Entry Serialization ─────────────────────────── */
 
   private normalizeSessionEntry(entry: unknown): SessionEntry {
-    const value = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
+    const value =
+      entry && typeof entry === "object"
+        ? (entry as Record<string, unknown>)
+        : {};
     return {
       id: typeof value.id === "string" ? value.id : crypto.randomUUID(),
       summary: typeof value.summary === "string" ? value.summary : null,
-      assistantReply: typeof value.assistantReply === "string" ? value.assistantReply : null,
-      assistantThinking: typeof value.assistantThinking === "string" ? value.assistantThinking : null,
-      assistantRefusal: typeof value.assistantRefusal === "string" ? value.assistantRefusal : null,
+      assistantReply:
+        typeof value.assistantReply === "string" ? value.assistantReply : null,
+      assistantThinking:
+        typeof value.assistantThinking === "string"
+          ? value.assistantThinking
+          : null,
+      assistantRefusal:
+        typeof value.assistantRefusal === "string"
+          ? value.assistantRefusal
+          : null,
       toolCalls: Array.isArray(value.toolCalls) ? value.toolCalls : null,
       status: this.normalizeSessionStatus(value.status),
-      failReason: typeof value.failReason === "string" ? value.failReason : null,
+      failReason:
+        typeof value.failReason === "string" ? value.failReason : null,
       usage: value.usage ?? null,
       totalCost: typeof value.totalCost === "number" ? value.totalCost : 0,
-      activeTokens: typeof value.activeTokens === "number" ? value.activeTokens : 0,
-      createTime: typeof value.createTime === "string" ? value.createTime : new Date().toISOString(),
-      updateTime: typeof value.updateTime === "string" ? value.updateTime : new Date().toISOString(),
+      activeTokens:
+        typeof value.activeTokens === "number" ? value.activeTokens : 0,
+      createTime:
+        typeof value.createTime === "string"
+          ? value.createTime
+          : new Date().toISOString(),
+      updateTime:
+        typeof value.updateTime === "string"
+          ? value.updateTime
+          : new Date().toISOString(),
       processes: this.deserializeProcesses(value.processes),
     };
   }
@@ -145,12 +180,16 @@ export class SessionStore {
     return "pending";
   }
 
-  private deserializeProcesses(value: unknown): Map<string, { startTime: string; command: string }> | null {
+  private deserializeProcesses(
+    value: unknown,
+  ): Map<string, { startTime: string; command: string }> | null {
     if (!value || typeof value !== "object") {
       return null;
     }
     const processes = new Map<string, { startTime: string; command: string }>();
-    for (const [pid, entry] of Object.entries(value as Record<string, unknown>)) {
+    for (const [pid, entry] of Object.entries(
+      value as Record<string, unknown>,
+    )) {
       if (!pid) {
         continue;
       }
@@ -159,8 +198,12 @@ export class SessionStore {
         processes.set(pid, { startTime: entry, command: "Running process..." });
       } else if (typeof entry === "object" && entry !== null) {
         const obj = entry as { startTime?: unknown; command?: unknown };
-        const startTime = typeof obj.startTime === "string" ? obj.startTime : new Date().toISOString();
-        const command = typeof obj.command === "string" ? obj.command : "Running process...";
+        const startTime =
+          typeof obj.startTime === "string"
+            ? obj.startTime
+            : new Date().toISOString();
+        const command =
+          typeof obj.command === "string" ? obj.command : "Running process...";
         processes.set(pid, { startTime, command });
       }
     }
@@ -173,7 +216,8 @@ export class SessionStore {
     if (!processes || processes.size === 0) {
       return null;
     }
-    const serialized: Record<string, { startTime: string; command: string }> = {};
+    const serialized: Record<string, { startTime: string; command: string }> =
+      {};
     for (const [pid, entry] of processes.entries()) {
       serialized[pid] = entry;
     }

@@ -43,7 +43,11 @@ export class McpClient {
   private nextId = 1;
   private pendingRequests = new Map<
     number,
-    { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: NodeJS.Timeout }
+    {
+      resolve: (value: unknown) => void;
+      reject: (error: Error) => void;
+      timer: NodeJS.Timeout;
+    }
   >();
   private stderrBuffer = "";
 
@@ -82,11 +86,17 @@ export class McpClient {
       }
 
       this.process.on("error", (err) => {
-        reject(this.withStderr(`Failed to start MCP server "${this.serverName}" (${this.command}): ${err.message}`));
+        reject(
+          this.withStderr(
+            `Failed to start MCP server "${this.serverName}" (${this.command}): ${err.message}`,
+          ),
+        );
       });
 
       this.process.on("close", (code) => {
-        const error = this.withStderr(`MCP server "${this.serverName}" exited with code ${code}`);
+        const error = this.withStderr(
+          `MCP server "${this.serverName}" exited with code ${code}`,
+        );
         for (const [, pending] of this.pendingRequests) {
           clearTimeout(pending.timer);
           pending.reject(error);
@@ -130,19 +140,34 @@ export class McpClient {
 
     for (let page = 0; page < 100; page++) {
       const params = cursor ? { cursor } : {};
-      const result = (await this.sendRequest("tools/list", params, timeoutMs)) as ListToolsResult;
+      const result = (await this.sendRequest(
+        "tools/list",
+        params,
+        timeoutMs,
+      )) as ListToolsResult;
       tools.push(...(result.tools ?? []));
-      cursor = typeof result.nextCursor === "string" && result.nextCursor ? result.nextCursor : undefined;
+      cursor =
+        typeof result.nextCursor === "string" && result.nextCursor
+          ? result.nextCursor
+          : undefined;
       if (!cursor) {
         return tools;
       }
     }
 
-    throw this.withStderr(`MCP server "${this.serverName}" returned too many tools/list pages`);
+    throw this.withStderr(
+      `MCP server "${this.serverName}" returned too many tools/list pages`,
+    );
   }
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<CallToolResult> {
-    return (await this.sendRequest("tools/call", { name, arguments: args })) as CallToolResult;
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+  ): Promise<CallToolResult> {
+    return (await this.sendRequest("tools/call", {
+      name,
+      arguments: args,
+    })) as CallToolResult;
   }
 
   disconnect(): void {
@@ -156,7 +181,11 @@ export class McpClient {
     }
   }
 
-  private sendRequest(method: string, params: Record<string, unknown>, timeoutMs = 30_000): Promise<unknown> {
+  private sendRequest(
+    method: string,
+    params: Record<string, unknown>,
+    timeoutMs = 30_000,
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const request: JsonRpcRequest = {
@@ -178,7 +207,10 @@ export class McpClient {
     });
   }
 
-  private sendNotification(method: string, params?: Record<string, unknown>): void {
+  private sendNotification(
+    method: string,
+    params?: Record<string, unknown>,
+  ): void {
     const notification = {
       jsonrpc: "2.0" as const,
       method,
@@ -201,7 +233,9 @@ export class McpClient {
         this.pendingRequests.delete(message.id);
         clearTimeout(pending.timer);
         if (message.error) {
-          pending.reject(this.withStderr(`MCP error: ${message.error.message}`));
+          pending.reject(
+            this.withStderr(`MCP error: ${message.error.message}`),
+          );
         } else {
           pending.resolve(message.result);
         }

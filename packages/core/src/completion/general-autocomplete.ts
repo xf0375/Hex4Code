@@ -109,7 +109,9 @@ const COMMON_PATTERNS: Record<string, string[]> = {
   print: ["print(", 'print(f"', "print!("],
 };
 
-function getLocalCompletions(textBefore: string): vscode.InlineCompletionItem[] {
+function getLocalCompletions(
+  textBefore: string,
+): vscode.InlineCompletionItem[] {
   const items: vscode.InlineCompletionItem[] = [];
   const lastLine = textBefore.split("\n").pop() || "";
   const trimmed = lastLine.trimStart();
@@ -127,7 +129,9 @@ function getLocalCompletions(textBefore: string): vscode.InlineCompletionItem[] 
 
   // Bracket matching
   if (trimmed.endsWith("{")) {
-    items.push(new vscode.InlineCompletionItem(`\n${indentation}  \n${indentation}}`));
+    items.push(
+      new vscode.InlineCompletionItem(`\n${indentation}  \n${indentation}}`),
+    );
   }
   if (trimmed.endsWith("(")) {
     items.push(new vscode.InlineCompletionItem(")"));
@@ -141,7 +145,9 @@ function getLocalCompletions(textBefore: string): vscode.InlineCompletionItem[] 
 
 // ── Main completion provider ─────────────────────────────────────────
 
-export class GeneralAutocompleteProvider implements vscode.InlineCompletionItemProvider, vscode.Disposable {
+export class GeneralAutocompleteProvider
+  implements vscode.InlineCompletionItemProvider, vscode.Disposable
+{
   private openaiClient: OpenAI | null = null;
   private model: string = COMPLETION_CONFIG.model;
   private baseURL: string = "";
@@ -159,36 +165,53 @@ export class GeneralAutocompleteProvider implements vscode.InlineCompletionItemP
       const os = require("os");
       const path = require("path");
       const fs = require("fs");
-      const settingsPath = path.join(os.homedir(), ".hex4code", "settings.json");
+      const settingsPath = path.join(
+        os.homedir(),
+        ".hex4code",
+        "settings.json",
+      );
       let settings: Record<string, unknown> = {};
       if (fs.existsSync(settingsPath)) {
         const raw = fs.readFileSync(settingsPath, "utf8");
         settings = JSON.parse(raw);
       }
 
-      // 使用多模型路由选择补全模型
+      // Use multi-model routing to select completion model
       const settingsEnv =
-        settings.env && typeof settings.env === "object" && !Array.isArray(settings.env)
+        settings.env &&
+        typeof settings.env === "object" &&
+        !Array.isArray(settings.env)
           ? (settings.env as Record<string, string | undefined>)
           : {};
       const route = resolveProviderRoute("completion", {
         model: typeof settings.model === "string" ? settings.model : undefined,
         routing:
-          settings.taskModels && typeof settings.taskModels === "object" && !Array.isArray(settings.taskModels)
+          settings.taskModels &&
+          typeof settings.taskModels === "object" &&
+          !Array.isArray(settings.taskModels)
             ? (settings.taskModels as Record<string, string>)
             : undefined,
         env: {
           ...settingsEnv,
-          API_KEY: typeof settings.apiKey === "string" ? settings.apiKey : settingsEnv.API_KEY,
+          API_KEY:
+            typeof settings.apiKey === "string"
+              ? settings.apiKey
+              : settingsEnv.API_KEY,
         },
         providers:
-          settings.providers && typeof settings.providers === "object" && !Array.isArray(settings.providers)
+          settings.providers &&
+          typeof settings.providers === "object" &&
+          !Array.isArray(settings.providers)
             ? (settings.providers as any)
             : undefined,
         legacyApiKeyProvider:
-          typeof settings.legacyApiKeyProvider === "string" ? (settings.legacyApiKeyProvider as any) : undefined,
+          typeof settings.legacyApiKeyProvider === "string"
+            ? (settings.legacyApiKeyProvider as any)
+            : undefined,
         legacyBaseURLProvider:
-          typeof settings.legacyBaseURLProvider === "string" ? (settings.legacyBaseURLProvider as any) : undefined,
+          typeof settings.legacyBaseURLProvider === "string"
+            ? (settings.legacyBaseURLProvider as any)
+            : undefined,
         processEnv: process.env,
       });
 
@@ -202,14 +225,18 @@ export class GeneralAutocompleteProvider implements vscode.InlineCompletionItemP
         apiKey: this.apiKey,
         baseURL: this.baseURL,
       });
-      this.openaiClient = client && "chat" in client ? (client as unknown as OpenAI) : null;
+      this.openaiClient =
+        client && "chat" in client ? (client as unknown as OpenAI) : null;
     } catch {
       // routeTask 失败时，用 HEX4CODE_API_KEY + createClient 回退
       this.apiKey = process.env.HEX4CODE_API_KEY || "";
       if (this.apiKey) {
         try {
           const { createClient } = require("../models/provider-client");
-          const client = createClient({ modelId: COMPLETION_CONFIG.model, apiKey: this.apiKey });
+          const client = createClient({
+            modelId: COMPLETION_CONFIG.model,
+            apiKey: this.apiKey,
+          });
           if (client && "chat" in client) {
             this.openaiClient = client as unknown as OpenAI;
             this.baseURL = (client as any).baseURL || "";
@@ -271,7 +298,12 @@ export class GeneralAutocompleteProvider implements vscode.InlineCompletionItemP
           messages: [
             {
               role: "user",
-              content: buildAutocompletePrompt(languageId, textBefore, textAfter, indentation),
+              content: buildAutocompletePrompt(
+                languageId,
+                textBefore,
+                textAfter,
+                indentation,
+              ),
             },
           ],
           max_tokens: COMPLETION_CONFIG.maxTokens,

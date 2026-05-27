@@ -5,13 +5,16 @@ import matter from "gray-matter";
 import type { SkillInfo } from "./session-types";
 
 /**
- * ── 技能管理 — 纯函数模块 ─────────────────────────
+ * ── Skill management — pure function module ────────────
  *
- * 提取自 SessionManager，所有函数均为独立导出，
- * 需要 projectRoot 的显式传入。
+ * Extracted from SessionManager, all functions are independently exported,
+ * requiring explicit projectRoot parameter.
  */
 
-export function resolveSkillPath(skillPath: string, projectRoot: string): string {
+export function resolveSkillPath(
+  skillPath: string,
+  projectRoot: string,
+): string {
   if (skillPath.startsWith("~/")) {
     return path.join(os.homedir(), skillPath.slice(2));
   }
@@ -30,7 +33,11 @@ export function resolveSkillPath(skillPath: string, projectRoot: string): string
   return path.join(os.homedir(), skillPath);
 }
 
-export function readSkillInfo(skillPath: string, displayPath: string, fallbackName: string): SkillInfo {
+export function readSkillInfo(
+  skillPath: string,
+  displayPath: string,
+  fallbackName: string,
+): SkillInfo {
   const fallbackSkill: SkillInfo = {
     name: fallbackName.replace(/_/g, "-"),
     path: displayPath,
@@ -42,9 +49,14 @@ export function readSkillInfo(skillPath: string, displayPath: string, fallbackNa
     const parsed = matter(skillMd);
     return {
       name:
-        typeof parsed.data.name === "string" && parsed.data.name.trim() ? parsed.data.name.trim() : fallbackSkill.name,
+        typeof parsed.data.name === "string" && parsed.data.name.trim()
+          ? parsed.data.name.trim()
+          : fallbackSkill.name,
       path: displayPath,
-      description: typeof parsed.data.description === "string" ? parsed.data.description.trim() : "",
+      description:
+        typeof parsed.data.description === "string"
+          ? parsed.data.description.trim()
+          : "",
     };
   } catch {
     return fallbackSkill;

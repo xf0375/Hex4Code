@@ -148,11 +148,13 @@ class GeminiAdapter implements GeminiClient {
     completions: {
       create: async (params: GeminiChatParams): Promise<GeminiResponse> => {
         // Gemini API 的消息格式转换
-        const systemMsg = params.messages.find((m) => m.role === "system")?.content || "";
+        const systemMsg =
+          params.messages.find((m) => m.role === "system")?.content || "";
         const history = params.messages
           .filter((m) => m.role !== "system")
           .map((m) => ({
-            role: m.role === "assistant" ? ("model" as const) : ("user" as const),
+            role:
+              m.role === "assistant" ? ("model" as const) : ("user" as const),
             parts: [{ text: m.content }],
           }));
 
@@ -163,19 +165,26 @@ class GeminiAdapter implements GeminiClient {
             maxOutputTokens: params.max_tokens ?? 4096,
             temperature: params.temperature ?? 0.7,
           },
-          systemInstruction: systemMsg ? { parts: [{ text: systemMsg }] } : undefined,
+          systemInstruction: systemMsg
+            ? { parts: [{ text: systemMsg }] }
+            : undefined,
         };
 
         // 调用 Gemini API
-        const response = await fetch(`${this.baseURL}/models/${params.model}:generateContent?key=${this.apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        });
+        const response = await fetch(
+          `${this.baseURL}/models/${params.model}:generateContent?key=${this.apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          },
+        );
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+          throw new Error(
+            `Gemini API error (${response.status}): ${errorText}`,
+          );
         }
 
         const data = (await response.json()) as GeminiRawResponse;
@@ -202,7 +211,8 @@ class GeminiAdapter implements GeminiClient {
                 prompt_tokens: data.usageMetadata.promptTokenCount ?? 0,
                 completion_tokens: data.usageMetadata.candidatesTokenCount ?? 0,
                 total_tokens:
-                  (data.usageMetadata.promptTokenCount ?? 0) + (data.usageMetadata.candidatesTokenCount ?? 0),
+                  (data.usageMetadata.promptTokenCount ?? 0) +
+                  (data.usageMetadata.candidatesTokenCount ?? 0),
               }
             : undefined,
         };

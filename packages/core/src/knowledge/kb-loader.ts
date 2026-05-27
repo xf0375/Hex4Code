@@ -2,7 +2,9 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-const KB_ROOT = process.env.HEX4_KB_ROOT || path.join(os.homedir(), ".hex4code", "knowledge-base");
+const KB_ROOT =
+  process.env.HEX4_KB_ROOT ||
+  path.join(os.homedir(), ".hex4code", "knowledge-base");
 
 export type KbEntry = {
   id: string;
@@ -20,7 +22,8 @@ function walkMd(dir: string): string[] {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, e.name);
       if (e.isFile() && e.name.endsWith(".md")) results.push(full);
-      else if (e.isDirectory() && !e.name.startsWith(".")) results.push(...walkMd(full));
+      else if (e.isDirectory() && !e.name.startsWith("."))
+        results.push(...walkMd(full));
     }
   } catch {
     /* skip */
@@ -84,7 +87,13 @@ export function loadKnowledgeBase(): KbEntry[] {
       console.warn("[KB] Error reading", f, e);
     }
   }
-  console.log("[KB] Loaded " + String(kbCache.length) + " chunks from " + String(files.length) + " files");
+  console.log(
+    "[KB] Loaded " +
+      String(kbCache.length) +
+      " chunks from " +
+      String(files.length) +
+      " files",
+  );
   return kbCache;
 }
 
@@ -113,8 +122,22 @@ export function formatKbResults(results: KbEntry[]): string {
   if (results.length === 0) return "No relevant knowledge found.";
   return results
     .map((r, i) => {
-      const snippet = r.content.length > 400 ? r.content.substring(0, 400) + "..." : r.content;
-      return "[" + String(i + 1) + "] " + r.title + " (" + r.category + "/" + r.file + ")\n" + snippet;
+      const snippet =
+        r.content.length > 400
+          ? r.content.substring(0, 400) + "..."
+          : r.content;
+      return (
+        "[" +
+        String(i + 1) +
+        "] " +
+        r.title +
+        " (" +
+        r.category +
+        "/" +
+        r.file +
+        ")\n" +
+        snippet
+      );
     })
     .join("\n---\n");
 }

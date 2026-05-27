@@ -96,7 +96,10 @@ export class SemanticCache {
   }
 
   /** 计算文本的 n-gram 特征向量 */
-  private computeFingerprint(text: string, n: number = 3): Record<string, number> {
+  private computeFingerprint(
+    text: string,
+    n: number = 3,
+  ): Record<string, number> {
     const fingerprint: Record<string, number> = {};
     const normalized = text.toLowerCase().replace(/\s+/g, " ");
     for (let i = 0; i <= normalized.length - n; i++) {
@@ -107,7 +110,10 @@ export class SemanticCache {
   }
 
   /** 计算两个特征向量的余弦相似度 */
-  private cosineSimilarity(a: Record<string, number>, b: Record<string, number>): number {
+  private cosineSimilarity(
+    a: Record<string, number>,
+    b: Record<string, number>,
+  ): number {
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
@@ -125,7 +131,10 @@ export class SemanticCache {
   }
 
   /** 查找缓存命中 */
-  find(query: string, model: string): { hit: true; entry: CacheEntry } | { hit: false } {
+  find(
+    query: string,
+    model: string,
+  ): { hit: true; entry: CacheEntry } | { hit: false } {
     this.evictExpired();
 
     const queryFingerprint = this.computeFingerprint(query);
@@ -180,7 +189,13 @@ export class SemanticCache {
   }
 
   /** 缓存统计 */
-  stats(): { totalEntries: number; totalModels: string[]; hitRate: number; hits: number; misses: number } {
+  stats(): {
+    totalEntries: number;
+    totalModels: string[];
+    hitRate: number;
+    hits: number;
+    misses: number;
+  } {
     const models = new Set(this.entries.map((e) => e.model));
     return {
       totalEntries: this.entries.length,
@@ -195,7 +210,10 @@ export class SemanticCache {
   private misses = 0;
 
   /** 查找并自动记录命中/未命中 */
-  findWithStats(query: string, model: string): { hit: true; entry: CacheEntry } | { hit: false } {
+  findWithStats(
+    query: string,
+    model: string,
+  ): { hit: true; entry: CacheEntry } | { hit: false } {
     const result = this.find(query, model);
     if (result.hit) this.hits++;
     else this.misses++;
@@ -219,7 +237,11 @@ export class SemanticCache {
         accessCount: e.accessCount,
         lastAccessed: e.lastAccessed,
       }));
-      fs.writeFileSync(this.config.persistPath, JSON.stringify(data, null, 2), "utf8");
+      fs.writeFileSync(
+        this.config.persistPath,
+        JSON.stringify(data, null, 2),
+        "utf8",
+      );
     } catch {
       /* 持久化失败不阻塞主流程 */
     }
@@ -235,7 +257,10 @@ export class SemanticCache {
       this.entries = data
         .filter(
           (e: Record<string, unknown>) =>
-            e && typeof e.query === "string" && typeof e.response === "string" && typeof e.model === "string",
+            e &&
+            typeof e.query === "string" &&
+            typeof e.response === "string" &&
+            typeof e.model === "string",
         )
         .map((e: Record<string, unknown>) => ({
           query: e.query as string,
@@ -264,7 +289,12 @@ export function getGlobalCache(config?: SemanticCacheConfig): SemanticCache {
     const cfg: SemanticCacheConfig = { ...config };
     if (!cfg.persistPath) {
       try {
-        cfg.persistPath = path.join(os.homedir(), ".hex4code", "cache", "semantic-cache.json");
+        cfg.persistPath = path.join(
+          os.homedir(),
+          ".hex4code",
+          "cache",
+          "semantic-cache.json",
+        );
       } catch {
         /* no persistence fallback */
       }

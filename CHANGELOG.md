@@ -1,44 +1,44 @@
-# 更新日志 (Changelog)
+# Changelog
 
-本文档记录 Hex4Code 的所有重要变更。
+All notable changes to Hex4Code are documented in this file.
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
 ## [1.1.0] — 2026-05-19
 
-### 新增
+### Added
 
-- **流水线编排 (Pipeline Orchestration)**：构建→测试→代码索引→版本管理的完整流水线编排系统
-- **双代理模式**：流水线强制模式 + 通用自由代理模式，支持动态切换
-- **三元压缩 (DualTrit)**：高效压缩会话上下文，显著扩展有效对话窗口
-- **RAG 知识库**：基于项目代码的检索增强生成，提升代码建议准确性
-- **MCP 协议支持**：支持 Model Context Protocol 外部工具服务器集成
-- **Skills 技能系统**：用户级和项目级自定义技能配置
-- **语义缓存**：基于语义相似度的 LLM 响应缓存，降低 API 调用成本
-- **内联代码补全**：上下文感知的 VS Code 内联代码建议
-- **图片粘贴支持**：CLI 和 VS Code 均支持截图粘贴提问
+- **Pipeline Orchestration**: Full pipeline orchestration system covering Build → Test → Code Index → Version Control
+- **Dual Agent Mode**: Pipeline-forced mode + general free agent mode with dynamic switching
+- **DualTrit Compression**: Efficient session context compression, significantly extending effective conversation windows
+- **RAG Knowledge Base**: Retrieval-augmented generation based on project code, improving code suggestion accuracy
+- **MCP Protocol Support**: Support for Model Context Protocol external tool server integration
+- **Skills System**: User-level and project-level custom skill configurations
+- **Semantic Cache**: LLM response caching based on semantic similarity, reducing API call costs
+- **Inline Code Completion**: Context-aware VS Code inline code suggestions
+- **Image Paste Support**: Both CLI and VS Code support pasting screenshots for questions
 
-### 变更
+### Changed
 
-- `@hex4code/core`：重构会话管理，统一工具执行接口
-- 模型路由器性能优化，减少路由延迟
+- `@hex4code/core`: Refactored session management, unified tool execution interface
+- Model router performance optimization, reduced routing latency
 
-### 修复
+### Fixed
 
-- 修复长时间会话内存泄漏问题
-- 修复多 provider 并发调用时的竞态条件
+- Fixed memory leak in long-running sessions
+- Fixed race condition during concurrent multi-provider calls
 
 ---
 
 ## [1.0.0] — 2025-12-01
 
-### 新增
+### Added
 
-- 初始版本发布
-- `@hex4code/core`：核心引擎（会话管理、多模型路由、工具执行）
-- `@hex4code/cli`：基于 Ink 的终端聊天应用
-- `hex4code-vscode`：VS Code 聊天面板扩展
-- 支持 DeepSeek、OpenAI、Qwen、Doubao 多供应商
-- 14 个 VS Code 命令
+- Initial release
+- `@hex4code/core`: Core engine (session management, multi-model routing, tool execution)
+- `@hex4code/cli`: Ink-based terminal chat application
+- `hex4code-vscode`: VS Code chat panel extension
+- Support for DeepSeek, OpenAI, Qwen, Doubao providers
+- 14 VS Code commands

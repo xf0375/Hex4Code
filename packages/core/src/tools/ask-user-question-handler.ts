@@ -43,7 +43,9 @@ export async function handleAskUserQuestionTool(
   };
 }
 
-function parseQuestions(raw: unknown): { ok: true; value: AskUserQuestionItem[] } | { ok: false; error: string } {
+function parseQuestions(
+  raw: unknown,
+): { ok: true; value: AskUserQuestionItem[] } | { ok: false; error: string } {
   if (!Array.isArray(raw) || raw.length === 0) {
     return {
       ok: false,
@@ -81,7 +83,11 @@ function parseQuestions(raw: unknown): { ok: true; value: AskUserQuestionItem[] 
     }
 
     const options: AskUserQuestionOption[] = [];
-    for (let optionIndex = 0; optionIndex < rawOptions.length; optionIndex += 1) {
+    for (
+      let optionIndex = 0;
+      optionIndex < rawOptions.length;
+      optionIndex += 1
+    ) {
       const option = rawOptions[optionIndex];
       if (!option || typeof option !== "object" || Array.isArray(option)) {
         return {
@@ -91,7 +97,9 @@ function parseQuestions(raw: unknown): { ok: true; value: AskUserQuestionItem[] 
       }
 
       const label =
-        typeof (option as { label?: unknown }).label === "string" ? (option as { label: string }).label.trim() : "";
+        typeof (option as { label?: unknown }).label === "string"
+          ? (option as { label: string }).label.trim()
+          : "";
       if (!label) {
         return {
           ok: false,
@@ -134,7 +142,9 @@ function buildQuestionSummary(questions: AskUserQuestionItem[]): string {
   questions.forEach((item, index) => {
     lines.push("");
     lines.push(`${index + 1}. ${item.question}`);
-    lines.push(`   Mode: ${item.multiSelect ? "multi-select" : "single-select"}`);
+    lines.push(
+      `   Mode: ${item.multiSelect ? "multi-select" : "single-select"}`,
+    );
     item.options.forEach((option) => {
       lines.push(`   - ${option.label}`);
       if (option.description) {

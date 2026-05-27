@@ -35,13 +35,21 @@ export function supportsMultimodal(model: string): boolean {
  */
 export function isDeepSeekV4Model(model: string): boolean {
   const def = getModelDef(model);
-  return def?.provider === "deepseek" && (def.id === "deepseek-v4-pro" || def.id === "deepseek-v4-flash");
+  return (
+    def?.provider === "deepseek" &&
+    (def.id === "deepseek-v4-pro" || def.id === "deepseek-v4-flash")
+  );
 }
 
 // ── 保留向后兼容的静态导出 ──────────────────────────────────────
 
 /** @deprecated 请使用 getModelDef() 或 provider-registry 的动态查询 */
-export const DEEPSEEK_V4_MODELS: ReadonlySet<string> = new Set(["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-chat", "deepseek-reasoner"]);
+export const DEEPSEEK_V4_MODELS: ReadonlySet<string> = new Set([
+  "deepseek-v4-flash",
+  "deepseek-v4-pro",
+  "deepseek-chat",
+  "deepseek-reasoner",
+]);
 
 /** @deprecated 请使用 provider-registry 的 supportsMultimodal 字段 */
 export const NON_MULTIMODAL_MODELS: ReadonlySet<string> = new Set([

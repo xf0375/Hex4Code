@@ -1,61 +1,61 @@
-# 贡献指南 (Contributing Guide)
+# Contributing Guide
 
-感谢你对 Hex4Code 的关注！我们欢迎所有形式的贡献。
+Thank you for your interest in Hex4Code! We welcome all forms of contribution.
 
-## 行为准则
+## Code of Conduct
 
-参与本项目即表示你同意遵守我们的[行为准则](./CODE_OF_CONDUCT.md)。请以专业和尊重的态度交流。
+By participating in this project, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md). Please engage with professionalism and respect.
 
-## 如何贡献
+## How to Contribute
 
-### 报告 Bug
+### Report Bugs
 
-1. 前往 [Issues 页面](https://atomgit.com/zzwgbdt/Hex4Code/issues)
-2. 搜索是否已有相同问题
-3. 如果没有，创建新 Issue，包含以下信息：
-   - **环境信息**：OS、Node.js 版本、Hex4Code 版本
-   - **复现步骤**：详细描述如何触发问题
-   - **预期行为**：你期望的结果
-   - **实际行为**：实际发生的结果
-   - **日志/截图**：相关的错误日志或截图
+1. Go to the [Issues page](https://atomgit.com/zzwgbdt/Hex4Code/issues)
+2. Search for existing issues first
+3. If none exists, create a new Issue with the following information:
+   - **Environment**: OS, Node.js version, Hex4Code version
+   - **Steps to reproduce**: Detailed description of how to trigger the issue
+   - **Expected behavior**: What you expected to happen
+   - **Actual behavior**: What actually happened
+   - **Logs/screenshots**: Relevant error logs or screenshots
 
-### 功能请求
+### Feature Requests
 
-1. 在 Issues 页面使用 Feature Request 模板
-2. 描述功能的使用场景和价值
-3. 如有，附上设计思路或伪代码
+1. Use the Feature Request template on the Issues page
+2. Describe the use case and value of the feature
+3. Include design ideas or pseudocode if available
 
-### 提交 Pull Request
+### Submitting a Pull Request
 
-#### 开发环境搭建
+#### Development Setup
 
 ```bash
-# 1. Fork 并克隆仓库
+# 1. Fork and clone the repository
 git clone https://atomgit.com/zzwgbdt/Hex4Code.git
 cd Hex4Code
 
-# 2. 安装依赖
+# 2. Install dependencies
 npm install
 
-# 3. 验证构建
+# 3. Verify the build
 npm run build
 
-# 4. 运行测试
+# 4. Run tests
 npm test
 ```
 
-#### 分支命名规范
+#### Branch Naming Convention
 
-| 类型     | 格式              | 示例                        |
-| -------- | ----------------- | --------------------------- |
-| 功能开发 | `feat/<描述>`     | `feat/add-syntax-highlight` |
-| Bug 修复 | `fix/<描述>`      | `fix/session-leak`          |
-| 文档更新 | `docs/<描述>`     | `docs/api-reference`        |
-| 重构     | `refactor/<描述>` | `refactor/model-router`     |
+| Type       | Format             | Example                        |
+| ---------- | ------------------ | ------------------------------ |
+| Feature    | `feat/<description>` | `feat/add-syntax-highlight`    |
+| Bug fix    | `fix/<description>`  | `fix/session-leak`             |
+| Docs       | `docs/<description>` | `docs/api-reference`           |
+| Refactor   | `refactor/<description>` | `refactor/model-router`     |
 
-#### 提交信息规范
+#### Commit Message Convention
 
-本项目使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+This project follows [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <description>
@@ -65,21 +65,21 @@ npm test
 [optional footer(s)]
 ```
 
-**类型说明**：
+**Type descriptions**:
 
-| 类型       | 说明                       |
-| ---------- | -------------------------- |
-| `feat`     | 新功能                     |
-| `fix`      | Bug 修复                   |
-| `docs`     | 文档更新                   |
-| `style`    | 代码风格（不影响代码逻辑） |
-| `refactor` | 重构                       |
-| `perf`     | 性能优化                   |
-| `test`     | 测试相关                   |
-| `chore`    | 构建/工具/依赖更新         |
-| `ci`       | CI/CD 配置                 |
+| Type       | Description                      |
+| ---------- | -------------------------------- |
+| `feat`     | New feature                      |
+| `fix`      | Bug fix                          |
+| `docs`     | Documentation updates            |
+| `style`    | Code style (no logic change)     |
+| `refactor` | Code refactoring                 |
+| `perf`     | Performance improvement          |
+| `test`     | Test-related                     |
+| `chore`    | Build/tooling/dependency updates |
+| `ci`       | CI/CD configuration              |
 
-**示例**：
+**Example**:
 
 ```
 feat(core): add multi-provider fallback in model router
@@ -90,58 +90,58 @@ primary provider fails or exceeds rate limits.
 Closes #42
 ```
 
-#### 代码规范
+#### Code Standards
 
-- **语言**：TypeScript 严格模式
-- **格式化**：Prettier（自动格式化）
-- **Lint**：ESLint 9 + typescript-eslint
-- **提交前**：Husky + lint-staged 自动检查
+- **Language**: TypeScript strict mode
+- **Formatting**: Prettier (auto-formatting)
+- **Lint**: ESLint 9 + typescript-eslint
+- **Pre-commit**: Husky + lint-staged auto-checks
 
 ```bash
-# 手动检查和格式化
+# Manual checks and formatting
 npm run lint
 npm run format
 ```
 
-#### PR 流程
+#### PR Workflow
 
-1. 确保代码通过所有测试：`npm test`
-2. 确保代码通过 Lint 检查：`npm run lint`
-3. 更新相关文档
-4. 创建 PR，填写模板信息
-5. 等待 Code Review
+1. Ensure all tests pass: `npm test`
+2. Ensure lint checks pass: `npm run lint`
+3. Update relevant documentation
+4. Create a PR and fill in the template
+5. Wait for Code Review
 
-#### 代码审查标准
+#### Code Review Standards
 
-- 代码可读性：清晰的命名、适当的注释
-- 测试覆盖：关键逻辑需要测试
-- 类型安全：充分利用 TypeScript 类型系统
-- 性能考量：避免不必要的开销
-- 兼容性：向后兼容或明确标注 Breaking Changes
+- Code readability: clear naming, appropriate comments
+- Test coverage: critical logic requires tests
+- Type safety: leverage TypeScript's type system
+- Performance: avoid unnecessary overhead
+- Compatibility: backward compatible or clearly mark Breaking Changes
 
-## 项目结构
+## Project Structure
 
 ```
-packages/core/     # 核心引擎 — 会话管理、模型路由、工具执行
-packages/cli/      # CLI 应用 — 基于 Ink 的终端 TUI
-vscode/            # VS Code 扩展 — WebView 聊天面板
-docs/              # 项目文档
+packages/core/     # Core engine — session management, model routing, tool execution
+packages/cli/      # CLI application — Ink-based terminal TUI
+vscode/            # VS Code extension — WebView chat panel
+docs/              # Project documentation
 ```
 
-详细架构说明请参考 [docs/architecture.md](./docs/architecture.md)。
+For detailed architecture, refer to [docs/architecture.md](./docs/architecture.md).
 
-## 开发工具
+## Development Tools
 
-| 工具                | 用途         |
-| ------------------- | ------------ |
-| TypeScript ^6.0.3   | 编程语言     |
-| esbuild             | 快速打包     |
-| Ink (React)         | CLI TUI 框架 |
-| ESLint + Prettier   | 代码质量     |
-| Husky + lint-staged | Git 钩子     |
-| Node.js Test Runner | 测试框架     |
+| Tool                 | Purpose                |
+| -------------------- | ---------------------- |
+| TypeScript ^6.0.3    | Programming language   |
+| esbuild              | Fast bundler           |
+| Ink (React)          | CLI TUI framework      |
+| ESLint + Prettier    | Code quality           |
+| Husky + lint-staged  | Git hooks              |
+| Node.js Test Runner  | Test framework         |
 
-## 问题与帮助
+## Questions & Help
 
 - **Issues**: [https://atomgit.com/zzwgbdt/Hex4Code/issues](https://atomgit.com/zzwgbdt/Hex4Code/issues)
 - **Discussions**: [https://atomgit.com/zzwgbdt/Hex4Code/discussions](https://atomgit.com/zzwgbdt/Hex4Code/discussions)

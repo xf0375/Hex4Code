@@ -23,11 +23,17 @@ export type OpenAIChatCompletionDebugEntry = {
   };
 };
 
-export function logOpenAIChatCompletionDebug(entry: OpenAIChatCompletionDebugEntry): void {
+export function logOpenAIChatCompletionDebug(
+  entry: OpenAIChatCompletionDebugEntry,
+): void {
   try {
     const logPath = getDebugLogPath();
     fs.mkdirSync(path.dirname(logPath), { recursive: true });
-    fs.appendFileSync(logPath, `${JSON.stringify(toSerializable(entry))}\n`, "utf8");
+    fs.appendFileSync(
+      logPath,
+      `${JSON.stringify(toSerializable(entry))}\n`,
+      "utf8",
+    );
   } catch {
     // Debug logging must never affect CLI behavior.
   }
@@ -37,7 +43,11 @@ export function getDebugLogPath(): string {
   return path.join(os.homedir(), ".hex4code", "logs", DEBUG_LOG_FILE);
 }
 
-export function normalizeDebugError(error: unknown): { name: string; message: string; stack?: string } {
+export function normalizeDebugError(error: unknown): {
+  name: string;
+  message: string;
+  stack?: string;
+} {
   if (error instanceof Error) {
     return {
       name: error.name,

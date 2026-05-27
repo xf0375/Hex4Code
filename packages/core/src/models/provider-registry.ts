@@ -22,7 +22,12 @@ export type ModelProvider =
   | "groq";
 
 /** 模型能力标签 — 用于任务-模型匹配 */
-export type ModelCapability = "code" | "reasoning" | "analysis" | "chat" | "fast";
+export type ModelCapability =
+  | "code"
+  | "reasoning"
+  | "analysis"
+  | "chat"
+  | "fast";
 
 // ── 模型定义 ─────────────────────────────────────────────────────
 export type ModelDef = {
@@ -231,7 +236,8 @@ export const PROVIDERS: ProviderConfig[] = [
     id: "ernie",
     name: "文心一言",
     apiKeyEnv: "ERNIE_API_KEY",
-    defaultBaseURL: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop",
+    defaultBaseURL:
+      "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop",
     supportsStreaming: true,
     supportsThinking: false,
     supportsMultimodal: false,
@@ -403,12 +409,16 @@ export function getModelDef(modelId: string): ModelDef | undefined {
 }
 
 /** 按Provider ID查找Provider配置 */
-export function getProvider(providerId: ModelProvider): ProviderConfig | undefined {
+export function getProvider(
+  providerId: ModelProvider,
+): ProviderConfig | undefined {
   return PROVIDER_BY_ID.get(providerId);
 }
 
 /** 查找包含某个模型ID的Provider */
-export function getProviderByModel(modelId: string): ProviderConfig | undefined {
+export function getProviderByModel(
+  modelId: string,
+): ProviderConfig | undefined {
   const def = MODEL_BY_ID.get(modelId);
   if (!def) return undefined;
   return PROVIDER_BY_ID.get(def.provider);
@@ -433,14 +443,19 @@ export function getModelsByProvider(providerId: ModelProvider): string[] {
 }
 
 /** 判断模型是否有某个能力 */
-export function modelHasCapability(modelId: string, capability: ModelCapability): boolean {
+export function modelHasCapability(
+  modelId: string,
+  capability: ModelCapability,
+): boolean {
   const def = MODEL_BY_ID.get(modelId);
   if (!def) return false;
   return def.capabilities.includes(capability);
 }
 
 /** 获取推荐用于某种任务的模型列表（按性价比排序） */
-export function getRecommendedModels(task: "completion" | "generation" | "analysis" | "review" | "chat"): ModelDef[] {
+export function getRecommendedModels(
+  task: "completion" | "generation" | "analysis" | "review" | "chat",
+): ModelDef[] {
   // 任务→所需能力的映射
   const requiredCapability: Record<string, ModelCapability> = {
     completion: "fast",
@@ -454,7 +469,9 @@ export function getRecommendedModels(task: "completion" | "generation" | "analys
 }
 
 /** 获取默认路由（任务→最便宜的可用模型ID） */
-export function getDefaultModelForTask(task: "completion" | "generation" | "analysis" | "review" | "chat"): string {
+export function getDefaultModelForTask(
+  task: "completion" | "generation" | "analysis" | "review" | "chat",
+): string {
   const recommended = getRecommendedModels(task);
   if (recommended.length === 0) return "deepseek-v4-flash";
   return recommended[0].id; // 最便宜

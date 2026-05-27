@@ -1,113 +1,91 @@
-# 致谢
+# Acknowledgments
 
 ---
 
-## 背景
+## Background
 
-Hex4Code 诞生于**郑州威光半导体有限公司**研发 **HEX4 非对称三进制 + TC 计算系统**
-的过程中。
+Hex4Code was born during the development of the **HEX4 Asymmetric Ternary + TC Computing System** at **Zhengzhou Weiguang Semiconductor Co., Ltd.**
 
-在日常研发里，我们发现通用 AI 编码工具对 HEX4 技术栈存在根本性的适配空白——它们
-既无法理解三进制编码和 TC 置信传播的语义，也缺乏针对性的 Token 优化手段。与此同时，
-我们在 DualTrit 压缩和置信合并算法上的积累，恰好为这些问题提供了现成的答案。
+In our daily R&D work, we discovered that general-purpose AI coding tools have a fundamental adaptability gap with the HEX4 technology stack — they can neither understand ternary encoding and TC confidence propagation semantics, nor provide targeted token optimization. At the same time, our accumulated expertise in DualTrit compression and confidence merging algorithms provided ready-made answers to these problems.
 
-于是我们做了一个决定：与其等待工具适配我们，不如亲自动手，构建一个与 HEX4 技术体系
-深度整合的 AI 编码助手。
+So we made a decision: instead of waiting for tools to adapt to us, we would build our own AI coding assistant deeply integrated with the HEX4 technology system.
 
 ---
 
-## 技术路线
+## Technical Approach
 
-### 模型选型
+### Model Selection
 
-经过对主流大模型的全面评估，**DeepSeek** 在以下五个维度上展现出与 HEX4 非对称三进制
-+ TC 计算系统独一无二的亲和度：
+After a comprehensive evaluation of mainstream large language models, **DeepSeek** demonstrated a unique affinity with the HEX4 Asymmetric Ternary + TC Computing System across five dimensions:
 
-| 维度 | DeepSeek 优势 | 对 HEX4 的意义 |
-|------|:------------:|----------------|
-| 上下文窗口 | 最高 1M tokens | 可容纳完整的 DualTrit 压缩上下文与 TC 传播链 |
-| Thinking Mode | 原生支持 | TC 四态置信判定依赖深度推理能力 |
-| 结构化输出 | 稳定可靠 | DualTrit 编码后的紧凑 JSON 可被无歧义解析 |
-| Token 经济性 | 高性价比 | 与 DualTrit 约 44% 压缩叠加，成本优势翻倍 |
-| API 兼容性 | OpenAI 兼容 | 零摩擦接入，将全部精力聚焦于上层创新 |
+| Dimension | DeepSeek Advantage | Significance for HEX4 |
+|-----------|:------------------:|-----------------------|
+| Context Window | Up to 1M tokens | Accommodates full DualTrit compressed context and TC propagation chains |
+| Thinking Mode | Native support | TC four-state confidence determination relies on deep reasoning capability |
+| Structured Output | Stable and reliable | DualTrit-encoded compact JSON can be unambiguously parsed |
+| Token Economy | Cost-effective | Paired with ~44% DualTrit compression, doubling cost advantages |
+| API Compatibility | OpenAI-compatible | Zero-friction integration, focusing entirely on upper-layer innovation |
 
-在评估过的所有模型中，只有 DeepSeek 同时在上下文深度、推理能力和经济效率三个维度
-上满足了 HEX4 技术栈的苛刻要求。
+Among all models evaluated, only DeepSeek simultaneously met the demanding requirements of the HEX4 technology stack across context depth, reasoning capability, and economic efficiency.
 
-### 工程参考
+### Engineering Reference
 
-在架构层面，我们学习并借鉴了 **[deepcode]** 的开源实现。其工具执行框架、会话管理模式
-和 Agent 循环设计，为 Hex4Code 的早期原型提供了清晰的工程参照。得益于这份工作，我们
-得以将主要精力聚焦于 HEX4 技术体系的差异化创新，而非从零搭建基础架构。
+At the architecture level, we studied and drew inspiration from the open-source implementation of **[deepcode]**. Its tool execution framework, session management patterns, and Agent loop design provided clear engineering references for Hex4Code's early prototype. Thanks to this work, we were able to focus our efforts on differentiated innovations for the HEX4 technology system rather than building foundational infrastructure from scratch.
 
 ---
 
-## 开发历程
+## Development Timeline
 
-| 时间节点 | 里程碑 | 说明 |
-|----------|--------|------|
-| **第 0–3 小时** | 首个可运行原型 | 参考 deepcode 架构，集成 HEX4 DualTrit 压缩方案，打通基础会话管理与工具执行链路 |
-| **第 3 小时** | 投入生产环境 | 原型即刻替代通用 AI 编码工具，在全团队日常研发中使用 |
-| **第 3–24 小时** | 首个生产迭代 | 根据实际使用反馈，打磨 prompt 模板和工具参数解析逻辑 |
-| **第 24–72 小时** | 核心系统成型 | 完成 TC 置信传播、流水线编排引擎、语义缓存——HEX4 工具链的三大支柱 |
-| **第 72–168 小时** | 多模型路由 + MCP | Provider 注册表扩展至 9 家、接入 MCP 协议、实现用户级与项目级 Skills 技能系统 |
-| **第 168 小时（第 7 天）** | **v1.1.0 开源发布** | Hex4Code v1.1.0 以 Apache-2.0 协议在 AtomGit 和 GitHub 正式发布 |
+| Time Point | Milestone | Description |
+|------------|-----------|-------------|
+| **Hours 0–3** | First working prototype | Referenced deepcode architecture, integrated HEX4 DualTrit compression, established basic session management and tool execution pipeline |
+| **Hour 3** | Production deployment | Prototype immediately replaced general-purpose AI coding tools, used in daily R&D across the entire team |
+| **Hours 3–24** | First production iteration | Refined prompt templates and tool parameter parsing logic based on real usage feedback |
+| **Hours 24–72** | Core system成型 | Completed TC confidence propagation, pipeline orchestration engine, and semantic cache — the three pillars of the HEX4 toolchain |
+| **Hours 72–168** | Multi-model routing + MCP | Expanded provider registry to 9 providers, integrated MCP protocol, implemented user-level and project-level Skills system |
+| **Hour 168 (Day 7)** | **v1.1.0 Open Source Release** | Hex4Code v1.1.0 officially released on AtomGit and GitHub under the Apache-2.0 license |
 
-贯穿这七天始终的原则只有一条：**在生产中迭代**。团队每天都在用自己构建的工具推进
-HEX4 计算系统的研发工作。每一次提交、每一个修复、每一项特性，都源于几个小时前刚
-遇到的真实痛点。没有冲刺计划，没有路线图会议——只有工具与它所要加速的工作之间，
-持续而紧密的反馈循环。
+The principle that guided these seven days was simple: **iterate in production**. Every day, the team used the very tools they were building to advance HEX4 computing system R&D. Every commit, every fix, every feature originated from real pain points encountered just hours earlier. No sprint plans, no roadmap meetings — just a continuous, tight feedback loop between the tool and the work it was meant to accelerate.
 
 ---
 
-## 特别致谢
+## Special Thanks
 
 ### DeepSeek
 
-感谢 **DeepSeek** 团队打造了与 HEX4 非对称三进制 + TC 计算系统最为亲和的大模型。
-DeepSeek V4 的超长上下文窗口、原生 Thinking Mode 以及稳定的结构化输出能力，让
-Hex4Code 的两项核心创新——DualTrit 三元压缩编码与 TC 四态置信传播——得以在生产
-环境中发挥出全部潜力。没有 DeepSeek 在模型能力上的突破，我们的技术构想将始终停留
-在理论层面。
+Thank you to the **DeepSeek** team for creating the large language model with the strongest affinity for the HEX4 Asymmetric Ternary + TC Computing System. DeepSeek V4's ultra-long context window, native Thinking Mode, and stable structured output capabilities enabled Hex4Code's two core innovations — DualTrit ternary compression encoding and TC four-state confidence propagation — to reach their full potential in production. Without DeepSeek's breakthrough in model capability, our technical vision would have remained theoretical.
 
 ### deepcode
 
-感谢 **[deepcode]** 的开源实现。其在工具执行调度、会话生命周期管理和 Agent 循环
-设计方面的工程实践，为 Hex4Code 的早期开发提供了宝贵的架构基础。站在这份工作的
-肩膀上，我们得以在三个小时内完成首个可运行原型，将创造力集中投入到 HEX4 技术栈
-的差异化创新上，而非重复造轮子。
+Thank you to the **[deepcode]** open-source implementation. Its engineering practices in tool execution scheduling, session lifecycle management, and Agent loop design provided an invaluable architectural foundation for Hex4Code's early development. Standing on the shoulders of this work, we were able to complete a working prototype within three hours, focusing our creative energy on differentiated innovation for the HEX4 technology stack rather than reinventing the wheel.
 
-### 郑州威光半导体团队
+### Zhengzhou Weiguang Semiconductor Team
 
-感谢在七天密集迭代中参与 Hex4Code 开发与生产验证的每一位团队成员。你们"一边用、
-一边改"的实践精神——每一次代码变更都立即以真实的 HEX4 计算系统研发任务来检验——
-是将一个三小时原型打磨为生产级开源版本的核心引擎。
+Thank you to every team member who participated in Hex4Code's development and production validation during the intensive seven-day iteration. Your practice of "use it while improving it" — where every code change was immediately tested against real HEX4 computing system R&D tasks — was the core engine that turned a three-hour prototype into a production-grade open-source release.
 
-### 开源社区
+### Open Source Community
 
-感谢 AtomGit 和 GitHub 为开源协作提供的沃土，感谢每一位使用、反馈和贡献 Hex4Code
-的开发者。Hex4Code 将始终保持开源——我们相信，最好的工具由使用它们的社区共同塑造，
-最好的创新在自由分享中诞生。
+Thank you to AtomGit and GitHub for providing fertile ground for open-source collaboration, and to every developer who uses, provides feedback on, and contributes to Hex4Code. Hex4Code will remain open source — we believe the best tools are shaped by the communities that use them, and the best innovations are born from free sharing.
 
 ---
 
-## 许可证
+## License
 
 ```
-Hex4Code — 集多模型路由、语义缓存与流水线编排于一体的 AI 编码助手。
+Hex4Code — An AI coding assistant integrating multi-model routing, semantic cache, and pipeline orchestration.
 
-Copyright © 2026 郑州威光半导体有限公司
-(Zhengzhou Weiguang Semiconductor Co., Ltd.)
+Copyright © 2026 Zhengzhou Weiguang Semiconductor Co., Ltd.
 
-依据 Apache License, Version 2.0 许可发布。
-许可证全文参见：http://www.apache.org/licenses/LICENSE-2.0
+Licensed under the Apache License, Version 2.0.
+See http://www.apache.org/licenses/LICENSE-2.0 for the full license text.
 
-除非适用法律要求或书面同意，本软件按"现状"分发，
-不提供任何明示或暗示的担保或条件。
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ```
 
 ---
 
-> **附注**：文中 `[deepcode]` 指代我们在技术路线上学习借鉴的特定开源项目。
-> 如需了解该项目的最新信息，请参阅其官方仓库。Hex4Code 中所有基于其参考
-> 实现的代码，均已依照相关开源协议的要求进行了恰当的标注与声明。
+> **Note**: The `[deepcode]` reference refers to the specific open-source project whose technical approach we studied and learned from.
+> For the latest information about that project, please refer to its official repository. All code in Hex4Code based on its reference
+> implementation has been properly attributed and declared in accordance with the relevant open-source license requirements.

@@ -104,7 +104,9 @@ function normalizeEnv(env: Hex4codeSettings["env"]): Record<string, string> {
   return result;
 }
 
-function normalizeProviders(settings?: Hex4codeSettings | null): Partial<Record<ModelProvider, ProviderSettings>> {
+function normalizeProviders(
+  settings?: Hex4codeSettings | null,
+): Partial<Record<ModelProvider, ProviderSettings>> {
   const result: Partial<Record<ModelProvider, ProviderSettings>> = {};
   const providers = settings?.providers;
   if (!providers || typeof providers !== "object") {
@@ -127,7 +129,9 @@ function normalizeProviders(settings?: Hex4codeSettings | null): Partial<Record<
   return result;
 }
 
-export function collectHex4codeEnv(processEnv: SettingsProcessEnv = process.env): Record<string, string> {
+export function collectHex4codeEnv(
+  processEnv: SettingsProcessEnv = process.env,
+): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(processEnv)) {
     if (!key.startsWith("HEX4CODE_") || typeof value !== "string") {
@@ -164,7 +168,10 @@ function mergeMcpServers(
 ): Record<string, McpServerConfig> | undefined {
   const userServers = userSettings?.mcpServers ?? {};
   const projectServers = projectSettings?.mcpServers ?? {};
-  const serverNames = new Set([...Object.keys(userServers), ...Object.keys(projectServers)]);
+  const serverNames = new Set([
+    ...Object.keys(userServers),
+    ...Object.keys(projectServers),
+  ]);
   if (serverNames.size === 0) {
     return undefined;
   }
@@ -255,16 +262,33 @@ export function resolveSettingsSources(
   // ── Config validation warnings ──
   const warnings: string[] = [];
   if (!model) warnings.push("⚠️  model configuration is empty");
-  if (model && model.length > 0 && /[A-Z]/.test(model) && !/[A-Z]{2,}/.test(model))
+  if (
+    model &&
+    model.length > 0 &&
+    /[A-Z]/.test(model) &&
+    !/[A-Z]{2,}/.test(model)
+  )
     warnings.push(`⚠️  model name may be incorrect: "${model}"`);
   const baseURL = trimString(env.BASE_URL) || defaults.baseURL;
   if (baseURL && !baseURL.startsWith("http")) {
-    warnings.push(`⚠️  baseURL may be invalid (does not start with http): "${baseURL}"`);
+    warnings.push(
+      `⚠️  baseURL may be invalid (does not start with http): "${baseURL}"`,
+    );
   }
-  const mcpServers = mergeMcpServers(userSettings, projectSettings, userEnv, projectEnv, systemEnv);
+  const mcpServers = mergeMcpServers(
+    userSettings,
+    projectSettings,
+    userEnv,
+    projectEnv,
+    systemEnv,
+  );
   if (mcpServers) {
     for (const [name, srv] of Object.entries(mcpServers)) {
-      if (!srv.command || typeof srv.command !== "string" || !srv.command.trim()) {
+      if (
+        !srv.command ||
+        typeof srv.command !== "string" ||
+        !srv.command.trim()
+      ) {
         warnings.push(`⚠️  MCP server "${name}" has empty command`);
       }
     }
@@ -275,7 +299,10 @@ export function resolveSettingsSources(
   }
 
   const notify =
-    trimString(systemEnv.NOTIFY) || trimString(projectSettings?.notify) || trimString(userSettings?.notify) || "";
+    trimString(systemEnv.NOTIFY) ||
+    trimString(projectSettings?.notify) ||
+    trimString(userSettings?.notify) ||
+    "";
   const webSearchTool =
     trimString(systemEnv.WEB_SEARCH_TOOL) ||
     trimString(projectSettings?.webSearchTool) ||
@@ -301,8 +328,12 @@ export function resolveSettingsSources(
       undefined,
     baseURL: trimString(env.BASE_URL) || defaults.baseURL,
     providers: Object.keys(providers).length > 0 ? providers : undefined,
-    legacyApiKeyProvider: projectSettings?.legacyApiKeyProvider ?? userSettings?.legacyApiKeyProvider,
-    legacyBaseURLProvider: projectSettings?.legacyBaseURLProvider ?? userSettings?.legacyBaseURLProvider,
+    legacyApiKeyProvider:
+      projectSettings?.legacyApiKeyProvider ??
+      userSettings?.legacyApiKeyProvider,
+    legacyBaseURLProvider:
+      projectSettings?.legacyBaseURLProvider ??
+      userSettings?.legacyBaseURLProvider,
     model,
     taskModels: Object.keys(taskModels).length > 0 ? taskModels : undefined,
     thinkingEnabled,
@@ -310,7 +341,13 @@ export function resolveSettingsSources(
     debugLogEnabled,
     notify: notify || undefined,
     webSearchTool: webSearchTool || undefined,
-    mcpServers: mergeMcpServers(userSettings, projectSettings, userEnv, projectEnv, systemEnv),
+    mcpServers: mergeMcpServers(
+      userSettings,
+      projectSettings,
+      userEnv,
+      projectEnv,
+      systemEnv,
+    ),
   };
 }
 
@@ -322,8 +359,12 @@ export function resolveSettings(
   return resolveSettingsSources(settings, null, defaults, processEnv);
 }
 
-export function modelConfigKey(config: Pick<ModelConfigSelection, "thinkingEnabled" | "reasoningEffort">): string {
-  return config.thinkingEnabled ? `thinking:${config.reasoningEffort}` : "thinking:none";
+export function modelConfigKey(
+  config: Pick<ModelConfigSelection, "thinkingEnabled" | "reasoningEffort">,
+): string {
+  return config.thinkingEnabled
+    ? `thinking:${config.reasoningEffort}`
+    : "thinking:none";
 }
 
 export function applyModelConfigSelection(
@@ -331,14 +372,19 @@ export function applyModelConfigSelection(
   current: ModelConfigSelection,
   selected: ModelConfigSelection,
 ): { settings: Hex4codeSettings; changed: boolean } {
-  const changed = selected.model !== current.model || modelConfigKey(selected) !== modelConfigKey(current);
+  const changed =
+    selected.model !== current.model ||
+    modelConfigKey(selected) !== modelConfigKey(current);
   const next: Hex4codeSettings = { ...(settings ?? {}) };
 
   if (!changed) {
     return { settings: next, changed: false };
   }
 
-  if (selected.model !== current.model || Object.prototype.hasOwnProperty.call(next, "model")) {
+  if (
+    selected.model !== current.model ||
+    Object.prototype.hasOwnProperty.call(next, "model")
+  ) {
     next.model = selected.model;
   } else {
     delete next.model;
@@ -354,7 +400,12 @@ export function applyModelConfigSelection(
 
 // ── Phase 1-4: Multi-model routing ────────────────────────────────────
 
-export type TaskType = "completion" | "generation" | "analysis" | "review" | "chat";
+export type TaskType =
+  | "completion"
+  | "generation"
+  | "analysis"
+  | "review"
+  | "chat";
 
 export type ModelRouting = {
   completion: string;
@@ -372,7 +423,10 @@ export const DEFAULT_MODEL_ROUTING: ModelRouting = {
   chat: "deepseek-chat",
 };
 
-export function getRouterForTask(task: TaskType, routing?: Partial<ModelRouting>): string {
+export function getRouterForTask(
+  task: TaskType,
+  routing?: Partial<ModelRouting>,
+): string {
   if (routing && routing[task]) return routing[task];
   return DEFAULT_MODEL_ROUTING[task];
 }

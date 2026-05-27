@@ -17,14 +17,19 @@ import * as os from "os";
 // ── Diff Queue ────────────────────────────────────────────────────────────
 // Prevents flooding with too many diff views at once
 
-const DIFF_QUEUE: Array<{ filePath: string; original: string | null; updated: string }> = [];
+const DIFF_QUEUE: Array<{
+  filePath: string;
+  original: string | null;
+  updated: string;
+}> = [];
 let diffTimer: ReturnType<typeof setTimeout> | null = null;
 
 function flushDiffQueue(): void {
   if (DIFF_QUEUE.length === 0) return;
 
   // Take the last item (most recent change) or all if only 1-2
-  const batch = DIFF_QUEUE.length <= 2 ? DIFF_QUEUE.splice(0) : [DIFF_QUEUE.pop()!];
+  const batch =
+    DIFF_QUEUE.length <= 2 ? DIFF_QUEUE.splice(0) : [DIFF_QUEUE.pop()!];
   DIFF_QUEUE.length = 0;
 
   for (const item of batch) {
@@ -39,7 +44,11 @@ function scheduleDiffQueue(): void {
 
 // ── Open Diff Editor ──────────────────────────────────────────────────────
 
-function openDiffEditor(filePath: string, original: string | null, updated: string): void {
+function openDiffEditor(
+  filePath: string,
+  original: string | null,
+  updated: string,
+): void {
   try {
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
     const tmpDir = path.join(os.tmpdir(), "hex4code-diff");
@@ -50,7 +59,9 @@ function openDiffEditor(filePath: string, original: string | null, updated: stri
     }
 
     // Create safe file name from the real path
-    const safeName = filePath.replace(/[^a-zA-Z0-9_\-./\\]/g, "_").replace(/[/\\]/g, "_");
+    const safeName = filePath
+      .replace(/[^a-zA-Z0-9_\-./\\]/g, "_")
+      .replace(/[/\\]/g, "_");
     const originalPath = path.join(tmpDir, `original_${safeName}`);
     const updatedPath = path.join(tmpDir, `updated_${safeName}`);
 
@@ -75,7 +86,7 @@ function openDiffEditor(filePath: string, original: string | null, updated: stri
       "vscode.diff",
       originalUri,
       updatedUri,
-      `${title} (变更预览)`,
+      `${title} — Changes Preview`,
     );
   } catch (err) {
     console.error("[DiffViewer] Failed to open diff:", err);
@@ -102,9 +113,17 @@ export function queueDiffPreview(
   // Avoid duplicates in queue
   const existing = DIFF_QUEUE.findIndex((item) => item.filePath === filePath);
   if (existing >= 0) {
-    DIFF_QUEUE[existing] = { filePath, original: originalContent, updated: updatedContent };
+    DIFF_QUEUE[existing] = {
+      filePath,
+      original: originalContent,
+      updated: updatedContent,
+    };
   } else {
-    DIFF_QUEUE.push({ filePath, original: originalContent, updated: updatedContent });
+    DIFF_QUEUE.push({
+      filePath,
+      original: originalContent,
+      updated: updatedContent,
+    });
   }
 
   scheduleDiffQueue();
@@ -141,7 +160,9 @@ export function extractDiffFromResult(
 /**
  * Register a file system watcher to clean up temp diff files on shutdown.
  */
-export function registerDiffViewerCleanup(context: vscode.ExtensionContext): void {
+export function registerDiffViewerCleanup(
+  context: vscode.ExtensionContext,
+): void {
   context.subscriptions.push({
     dispose: () => {
       const tmpDir = path.join(os.tmpdir(), "hex4code-diff");
