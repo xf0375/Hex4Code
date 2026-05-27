@@ -23,7 +23,12 @@ import { setShellIfWindows } from "@hex4code/core/common/shell-utils";
 import { UnifiedCompletionProvider } from "@hex4code/core/completion/unified-completion";
 import { getEffectiveMode, getModeLabel, type AgentMode, type ModeConfig } from "@hex4code/core/agent-mode";
 import { PROVIDERS, getModelDef } from "@hex4code/core/models/provider-registry";
-import { routeTask, detectConfiguredProviders } from "@hex4code/core/models/model-router";
+import {
+  detectConfiguredProviders,
+  listConfiguredProviderRuntimeModels,
+  resolveProviderRoute,
+  type ProviderRuntimeModel,
+} from "@hex4code/core/models/model-router";
 import { createClient } from "@hex4code/core/models/provider-client";
 import type { ToolExecutionResult } from "@hex4code/core/tools/executor";
 import { queueDiffPreview, registerDiffViewerCleanup } from "@hex4code/core/common/diff-viewer";
@@ -220,11 +225,23 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
       if (message?.type === "ready") {
         // webview 已准备好，发送初始数据
         this.loadInitialSession();
+        this.sendSettingsState();
         // 同时请求 skills 列表
         this.sendSkillsList();
       } else if (message?.type === "requestSkills") {
         // 请求 skills 列表
         this.sendSkillsList();
+      } else if (message?.type === "requestSettingsState") {
+        this.sendSettingsState();
+      } else if (message?.type === "selectModel") {
+        const modelId = String(message.modelId || "").trim();
+        if (modelId) {
+          await this.selectModelFromWebview(modelId);
+        }
+      } else if (message?.type === "openProviderSettings") {
+        await configureProviders();
+        updateModelStatusBar();
+        this.sendSettingsState();
       } else if (message?.type === "userPrompt") {
         const prompt = String(message.prompt || "").trim();
         const images = Array.isArray(message.images)
@@ -282,11 +299,7 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
     const latestMessages = this.sessionManager
       .listSessionMessages(latestSession.id)
       .filter((message) => message.visible);
-    if (
-      latestMessages.length === 0 ||
-      latestSession.status === "pending" ||
-      latestSession.status === "processing"
-    ) {
+    if (latestMessages.length === 0) {
       this.sendEmptyState(sessionsList);
       return;
     }
@@ -403,6 +416,105 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
     this.sendMessage({ type: "skillsList", skills });
   }
 
+  private buildSettingsState() {
+    const settings = this.resolveCurrentSettings();
+    const routeInput = {
+      model: settings.model,
+      routing: settings.taskModels,
+      env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env.API_KEY },
+      providers: settings.providers,
+      legacyApiKeyProvider: settings.legacyApiKeyProvider,
+      legacyBaseURLProvider: settings.legacyBaseURLProvider,
+      processEnv: process.env,
+    };
+    const currentRoute = resolveProviderRoute("chat", routeInput);
+    const currentProvider = PROVIDERS.find((provider) => provider.id === currentRoute.provider);
+
+    return {
+      currentModel: currentRoute.modelId,
+      currentLabel: currentRoute.modelDef?.label ?? currentRoute.modelId,
+      providerId: currentRoute.provider,
+      providerName: currentProvider?.name ?? currentRoute.provider,
+      apiKeyEnv: currentRoute.apiKeyEnv,
+      apiKeySource: currentRoute.apiKeySource,
+      baseURLSource: currentRoute.baseURLSource,
+      baseURL: currentRoute.baseURL,
+      configured: Boolean(currentRoute.apiKey),
+      warnings: currentRoute.warnings,
+      providers: PROVIDERS.map((provider) => ({
+        id: provider.id,
+        name: provider.name,
+        apiKeyEnv: provider.apiKeyEnv,
+        defaultBaseURL: provider.defaultBaseURL,
+        configured: provider.models.some((model) => {
+          const route = resolveProviderRoute("chat", { ...routeInput, model: model.id });
+          return Boolean(route.apiKey);
+        }),
+        models: provider.models.map((model) => {
+          const route = resolveProviderRoute("chat", { ...routeInput, model: model.id });
+          return {
+            id: model.id,
+            label: model.label,
+            providerId: provider.id,
+            providerName: provider.name,
+            apiKeyEnv: provider.apiKeyEnv,
+            configured: Boolean(route.apiKey),
+            apiKeySource: route.apiKeySource,
+            baseURLSource: route.baseURLSource,
+            baseURL: route.baseURL,
+            contextWindow: model.contextWindow,
+            costPer1MInput: model.costPer1MInput,
+            costPer1MOutput: model.costPer1MOutput,
+            capabilities: model.capabilities,
+          };
+        }),
+      })),
+    };
+  }
+
+  public sendSettingsState(): void {
+    this.sendMessage({
+      type: "settingsState",
+      state: this.buildSettingsState(),
+    });
+  }
+
+  private async selectModelFromWebview(modelId: string): Promise<void> {
+    const model = getModelDef(modelId);
+    if (!model) {
+      vscode.window.showWarningMessage(`Unknown model: ${modelId}`);
+      return;
+    }
+
+    const { settings, scope } = readWritableModelSettings();
+    const env = ensureSettingsEnv(settings);
+    env.MODEL = model.id;
+    settings.model = model.id;
+    writeWritableModelSettings(settings, scope);
+    updateModelStatusBar();
+    this.sendSettingsState();
+
+    const route = resolveProviderRoute("chat", {
+      model: model.id,
+      routing: settings.taskModels,
+      env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env?.API_KEY },
+      providers: settings.providers,
+      legacyApiKeyProvider: settings.legacyApiKeyProvider,
+      legacyBaseURLProvider: settings.legacyBaseURLProvider,
+      processEnv: process.env,
+    });
+
+    if (!route.apiKey) {
+      const provider = PROVIDERS.find((item) => item.id === route.provider);
+      vscode.window.showWarningMessage(
+        `${model.label} selected, but ${provider?.name ?? route.provider} has no API key configured.`,
+      );
+      return;
+    }
+
+    vscode.window.showInformationMessage(`Model selected: ${model.label}`);
+  }
+
   private async handlePrompt(prompt: string, skills?: SkillInfo[], imageUrls?: string[]): Promise<void> {
     if (!this.webviewView) {
       return;
@@ -423,6 +535,16 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
 
     try {
       const userPrompt: UserPromptContent = { text: prompt, skills, imageUrls: normalizedImages };
+
+      // 注入当前打开的文件上下文
+      const activeEditor = vscode.window.activeTextEditor;
+      if (activeEditor) {
+        const doc = activeEditor.document;
+        userPrompt.activeFile = {
+          path: doc.uri.fsPath,
+          content: doc.getText(),
+        };
+      }
       await this.sessionManager.handleUserPrompt(userPrompt);
       await this.sendSkillsList();
 
@@ -477,14 +599,14 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
     const settings = this.resolveCurrentSettings();
 
     // 使用多模型路由引擎选择聊天模型
-    const configuredProviders = detectConfiguredProviders(process.env);
-    // Read taskModels from raw settings (not in ResolvedHex4codeSettings)
-    const rawSettings = readSettingsFile() || {};
-    const taskModels = (rawSettings.taskModels as any) || undefined;
-    const route = routeTask("chat", {
-      explicitModel: settings.model,
-      routing: taskModels,
-      configuredProviders,
+    const route = resolveProviderRoute("chat", {
+      model: settings.model,
+      routing: settings.taskModels,
+      env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env.API_KEY },
+      providers: settings.providers,
+      legacyApiKeyProvider: settings.legacyApiKeyProvider,
+      legacyBaseURLProvider: settings.legacyBaseURLProvider,
+      processEnv: process.env,
     });
     const routedModel = route.modelId;
     this._lastRoutedModel = routedModel;
@@ -495,10 +617,7 @@ class Hex4codeViewProvider implements vscode.WebviewViewProvider {
     // env[route.apiKeyEnv] 覆盖了 hex4relay secrets-resolve 的同步路径：
     //   - 策略1 (env): 直接从环境变量读取，此处即 process.env[route.apiKeyEnv]
     //   - 策略3 (raw): settings.apiKey 已覆盖
-    const routedApiKey =
-      settings.apiKey ||
-      process.env[route.apiKeyEnv] ||
-      "";
+    const routedApiKey = route.apiKey;
 
     const { thinkingEnabled, reasoningEffort, debugLogEnabled, notify, webSearchTool, env } = settings;
     const machineId = vscode.env.machineId;
@@ -702,6 +821,76 @@ function writeSettingsFile(settings: Hex4codeSettings): void {
   fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings, null, 2), "utf8");
 }
 
+function writeProjectSettingsFile(settings: Hex4codeSettings): boolean {
+  const workspaceRoot = getWorkspaceRootFromVsCode();
+  if (!workspaceRoot) {
+    return false;
+  }
+  const dir = path.join(workspaceRoot, ".hex4code");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings, null, 2), "utf8");
+  return true;
+}
+
+function hasModelOverride(settings: Hex4codeSettings | null | undefined): boolean {
+  return Boolean(String(settings?.model || "").trim() || String(settings?.env?.MODEL || "").trim());
+}
+
+function readWritableModelSettings(): { settings: Hex4codeSettings; scope: "project" | "user" } {
+  const projectSettings = readProjectSettingsFile();
+  if (hasModelOverride(projectSettings)) {
+    return { settings: projectSettings ?? {}, scope: "project" };
+  }
+  return { settings: readSettingsFile(), scope: "user" };
+}
+
+function writeWritableModelSettings(settings: Hex4codeSettings, scope: "project" | "user"): void {
+  if (scope === "project" && writeProjectSettingsFile(settings)) {
+    return;
+  }
+  writeSettingsFile(settings);
+}
+
+function getProviderSettings(settings: Hex4codeSettings, provider: (typeof PROVIDERS)[number]) {
+  return settings.providers?.[provider.id];
+}
+
+function getConfiguredProviderKey(settings: Hex4codeSettings, provider: (typeof PROVIDERS)[number]): string {
+  return (
+    getProviderSettings(settings, provider)?.apiKey ||
+    settings.env?.[provider.apiKeyEnv] ||
+    process.env[provider.apiKeyEnv] ||
+    ""
+  );
+}
+
+function isProviderConfigured(settings: Hex4codeSettings, provider: (typeof PROVIDERS)[number]): boolean {
+  return Boolean(getConfiguredProviderKey(settings, provider).trim());
+}
+
+function ensureProviderSettings(settings: Hex4codeSettings, provider: (typeof PROVIDERS)[number]) {
+  settings.providers = settings.providers ?? {};
+  settings.providers[provider.id] = settings.providers[provider.id] ?? {};
+  return settings.providers[provider.id]!;
+}
+
+function getConfiguredRuntimeModels(task: "completion" | "generation" | "analysis" | "review" | "chat" = "chat") {
+  const settings = readResolvedSettingsForUi();
+  return listConfiguredProviderRuntimeModels(task, {
+    model: settings.model,
+    routing: settings.taskModels,
+    env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env.API_KEY },
+    providers: settings.providers,
+    legacyApiKeyProvider: settings.legacyApiKeyProvider,
+    legacyBaseURLProvider: settings.legacyBaseURLProvider,
+    processEnv: process.env,
+  });
+}
+
+function getConfiguredProviderIdsFromSettings(): Array<ProviderRuntimeModel["providerId"]> {
+  return getConfiguredRuntimeModels("chat").map((runtime) => runtime.providerId);
+}
+
 /**
  * 显示模型选择 QuickPick。
  * 按 Provider 分组，显示模型名称、上下文窗口和价格。
@@ -709,15 +898,14 @@ function writeSettingsFile(settings: Hex4codeSettings): void {
  */
 async function showModelPicker(): Promise<void> {
   // 检测当前已配置的 Provider
-  const configuredProviders = detectConfiguredProviders(process.env);
-  const currentSettings = readSettingsFile();
+  const { settings: currentSettings, scope } = readWritableModelSettings();
   const currentModel = readResolvedSettingsForUi().model;
 
   // 构建 QuickPick 选项（按 Provider 分组）
   const items: vscode.QuickPickItem[] = [];
 
   for (const provider of PROVIDERS) {
-    const isConfigured = configuredProviders.includes(provider.id);
+    const isConfigured = isProviderConfigured(currentSettings, provider);
 
     // Provider 分组头
     const providerName = `$(organization) ${provider.name}`;
@@ -743,16 +931,6 @@ async function showModelPicker(): Promise<void> {
     }
   }
 
-  // 底部：说明项
-  items.push({
-    label: "",
-    kind: vscode.QuickPickItemKind.Separator,
-  });
-  items.push({
-    label: "$(gear) 配置 Provider API Key",
-    description: "设置多个模型的访问密钥",
-  });
-
   const selected = await vscode.window.showQuickPick(items, {
     placeHolder: "选择默认模型（按任务路由自动匹配）",
     matchOnDescription: true,
@@ -761,12 +939,6 @@ async function showModelPicker(): Promise<void> {
 
   if (!selected) return;
 
-  // 点击"配置 Provider API Key"
-  if (selected.label.includes("配置 Provider API Key")) {
-    await configureProviders();
-    return;
-  }
-
   // 从 label 提取模型名
   for (const provider of PROVIDERS) {
     for (const model of provider.models) {
@@ -774,10 +946,9 @@ async function showModelPicker(): Promise<void> {
         // 保存选择
         const env = ensureSettingsEnv(currentSettings);
         env.MODEL = model.id;
-        if (!env.BASE_URL) {
-          env.BASE_URL = provider.defaultBaseURL;
-        }
-        writeSettingsFile(currentSettings);
+        currentSettings.model = model.id;
+        writeWritableModelSettings(currentSettings, scope);
+        updateModelStatusBar();
         vscode.window.showInformationMessage(
           `已选择模型: ${provider.name} - ${model.label}（${model.id}）`,
           `输入: $${model.costPer1MInput}/M · 输出: $${model.costPer1MOutput}/M`,
@@ -794,14 +965,13 @@ async function showModelPicker(): Promise<void> {
  * 选中后提示用户输入 API Key。
  */
 async function configureProviders(): Promise<void> {
-  const configuredProviders = detectConfiguredProviders(process.env);
   const currentSettings = readSettingsFile();
   const settingsEnv = ensureSettingsEnv(currentSettings);
 
   // 构建 QuickPick
   const items: vscode.QuickPickItem[] = PROVIDERS.map((provider) => {
-    const isConfigured = configuredProviders.includes(provider.id);
-    const existingApiKey = settingsEnv.API_KEY;
+    const isConfigured = isProviderConfigured(currentSettings, provider);
+    const existingApiKey = getConfiguredProviderKey(currentSettings, provider);
     const icon = isConfigured ? "$(check)" : existingApiKey ? "$(key)" : "$(unverified)";
     return {
       label: `${icon} ${provider.name}`,
@@ -871,12 +1041,14 @@ async function configureProviders(): Promise<void> {
 
   if (apiKey) {
     // 保存到 settings.json
-    settingsEnv.API_KEY = apiKey;
-    settingsEnv.BASE_URL = provider.defaultBaseURL;
+    const providerSettings = ensureProviderSettings(currentSettings, provider);
+    providerSettings.apiKey = apiKey;
+    providerSettings.baseURL = provider.defaultBaseURL;
     // 如果未设置默认模型，自动选择最便宜的模型
     if (!settingsEnv.MODEL && provider.models.length > 0) {
       const cheapest = [...provider.models].sort((a, b) => a.costPer1MInput - b.costPer1MInput)[0];
       settingsEnv.MODEL = cheapest.id;
+      currentSettings.model = cheapest.id;
       vscode.window.showInformationMessage(
         `已将 ${provider.name} 的 API Key 保存到 settings.json，并自动选择 ${cheapest.label} 作为默认模型`,
       );
@@ -884,6 +1056,7 @@ async function configureProviders(): Promise<void> {
       vscode.window.showInformationMessage(`已将 ${provider.name} 的 API Key 保存到 settings.json`);
     }
     writeSettingsFile(currentSettings);
+    updateModelStatusBar();
   } else {
     // 用户留空 → 使用环境变量
     const envKey = process.env[provider.apiKeyEnv];
@@ -961,21 +1134,23 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("hex4code.selectModel", async () => {
       await showModelPicker();
+      provider.sendSettingsState();
     }),
   );
 
-  // ── Provider Configuration ─────────────────────────────────────────
+  // ── Provider Configuration (disabled — users edit settings.json directly) ──
   context.subscriptions.push(
     vscode.commands.registerCommand("hex4code.configureProviders", async () => {
       await configureProviders();
+      updateModelStatusBar();
+      provider.sendSettingsState();
     }),
   );
 
   // ── Provider Health Command ─────────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("hex4code.providerHealth", async () => {
-      const { detectConfiguredProviders } = await import("@hex4code/core/models/model-router");
-      const configured = detectConfiguredProviders(process.env);
+      const configured = getConfiguredRuntimeModels("chat");
       if (configured.length === 0) {
         vscode.window.showInformationMessage(
           "No AI providers configured. Use 'Hex4Code: Configure AI Providers' to set one up.",
@@ -987,18 +1162,21 @@ export function activate(context: vscode.ExtensionContext): void {
       panel.appendLine(`Provider Health Check — ${new Date().toLocaleString()}`);
       panel.appendLine("─".repeat(50));
       let healthy = 0;
-      for (const pid of configured) {
+      for (const runtime of configured) {
+        const pid = runtime.providerId;
         const p = PROVIDERS.find((pr) => pr.id === pid);
         if (!p) {
           panel.appendLine(`❌ ${pid}: unknown provider`);
           continue;
         }
-        const key = process.env[p.apiKeyEnv] || "";
+        const key = "";
         const testModel = p.models.find((m: any) => m.capabilities?.includes?.("chat")) || p.models[0];
         panel.appendLine(`🔍 Testing ${p.name} (${testModel.id})...`);
         try {
           const { testProviderConnection } = await import("@hex4code/core/models/model-router");
-          const result = await testProviderConnection(testModel.id, key, p.defaultBaseURL);
+          const result = runtime
+            ? await testProviderConnection(runtime.modelId, runtime.apiKey, runtime.baseURL)
+            : await testProviderConnection(testModel.id, key, p.defaultBaseURL);
           if (result.ok) {
             panel.appendLine(`  ✅ OK — ${result.latencyMs}ms`);
             healthy++;
@@ -1116,7 +1294,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       if (!taskType) return;
 
-      const configuredProviders = detectConfiguredProviders(process.env);
+      const configuredProviders = getConfiguredProviderIdsFromSettings();
       const modelItems: vscode.QuickPickItem[] = [];
       for (const provider of PROVIDERS) {
         const isConfigured = configuredProviders.includes(provider.id);
@@ -1171,8 +1349,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // ── Smart Model Recommendation ───────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("hex4code.recommendModel", async () => {
-      const { getSmartRecommendation, detectConfiguredProviders } = await import("@hex4code/core/models/model-router");
-      const configuredProviders = detectConfiguredProviders(process.env);
+      const { getSmartRecommendation } = await import("@hex4code/core/models/model-router");
+      const configuredProviders = getConfiguredProviderIdsFromSettings();
       const preferenceItems: vscode.QuickPickItem[] = [
         { label: "$(dash) 均衡 (Balanced)", description: "按性价比推荐" },
         { label: "$(light-bulb) 最强 (Best)", description: "推荐推理能力最强模型" },
@@ -1222,7 +1400,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // ── Multi-Model Parallel Vote ──────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("hex4code.voteOnSelection", async () => {
-      const { parallelVote, detectConfiguredProviders } = await import("@hex4code/core/models/model-router");
+      const { parallelVote } = await import("@hex4code/core/models/model-router");
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
         vscode.window.showWarningMessage("No active text editor");
@@ -1233,13 +1411,12 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.showWarningMessage("No text selected");
         return;
       }
-      const configured = detectConfiguredProviders(process.env);
-      if (configured.length < 2) {
-        const confirm = await vscode.window.showWarningMessage(
-          "At least 2 providers needed for voting. Configure more providers?",
-          "Configure",
+      const runtimeModels = getConfiguredRuntimeModels("chat");
+      const configured = runtimeModels.map((runtime) => runtime.providerId);
+      if (runtimeModels.length < 2) {
+        vscode.window.showInformationMessage(
+          "At least 2 providers needed for voting. Please edit settings.json to add more API keys.",
         );
-        if (confirm) vscode.commands.executeCommand("hex4code.configureProviders");
         return;
       }
       const strategyItems: vscode.QuickPickItem[] = [
@@ -1262,7 +1439,7 @@ export function activate(context: vscode.ExtensionContext): void {
           cancellable: true,
         },
         async (_progress, _token) => {
-          const result = await parallelVote(selection, configured, { strategy, modelCount: 3 });
+          const result = await parallelVote(selection, configured, { strategy, modelCount: 3, runtimeModels });
           const panel = vscode.window.createOutputChannel(`Vote: ${result.taskId.slice(-8)}`, { log: true });
           panel.appendLine(`Multi-Model Vote — ${strategy}`);
           panel.appendLine("─".repeat(60));
@@ -1315,12 +1492,13 @@ export function activate(context: vscode.ExtensionContext): void {
         placeHolder: "Enter a prompt to test across models...",
       });
       if (!prompt) return;
-      const { benchmarkModels, detectConfiguredProviders } = await import("@hex4code/core/models/model-router");
-      const configured = detectConfiguredProviders(process.env);
+      const { benchmarkModels } = await import("@hex4code/core/models/model-router");
+      const runtimeModels = getConfiguredRuntimeModels("chat");
+      const configured = runtimeModels.map((runtime) => runtime.providerId);
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: "Benchmarking models..." },
         async () => {
-          const result = await benchmarkModels(prompt, configured);
+          const result = await benchmarkModels(prompt, configured, { runtimeModels });
           const panel = vscode.window.createOutputChannel("Benchmark", { log: true });
           panel.appendLine(`Benchmark: ${result.taskId}`);
           panel.appendLine("─".repeat(60));
@@ -1401,6 +1579,7 @@ export function activate(context: vscode.ExtensionContext): void {
         { enableScripts: true, retainContextWhenHidden: true },
       );
       const { PROVIDERS } = await import("@hex4code/core/models/provider-registry");
+      const currentSettings = readSettingsFile();
       const providerHTML = PROVIDERS.map((p) => {
         const modelsHTML = p.models
           .map(
@@ -1408,7 +1587,8 @@ export function activate(context: vscode.ExtensionContext): void {
               `<tr><td>${m.id}</td><td>${m.label}</td><td>${m.costPer1MInput}/${m.costPer1MOutput}</td><td>${Math.round(m.contextWindow / 1000)}K</td><td>${(m.capabilities || []).join(", ")}</td></tr>`,
           )
           .join("\n");
-        const configuredKey = process.env[p.apiKeyEnv] ? process.env[p.apiKeyEnv]!.slice(0, 8) + "..." : "(not set)";
+        const key = getConfiguredProviderKey(currentSettings, p);
+        const configuredKey = key ? `${key.slice(0, 8)}...` : "(not set)";
         return `<div class="provider"><h2>${p.name}</h2><p>Key: ${configuredKey}${configuredKey !== "(not set)" ? ' <span class="key-ok">OK</span>' : ' <span class="key-missing">MISSING</span>'}</p><table><tr><th>Model</th><th>Label</th><th>Cost</th><th>Context</th><th>Capabilities</th></tr>${modelsHTML}</table></div>`;
       }).join("\n");
       panel.webview.html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
@@ -1486,20 +1666,19 @@ export function activate(context: vscode.ExtensionContext): void {
   // ── Provider Auto-Detection ─────────────────────────────────────────
   (async () => {
     try {
-      const { detectConfiguredProviders, getUnconfiguredProviders } = await import("@hex4code/core/models/model-router");
-      const configured = detectConfiguredProviders(process.env);
-      const available = getUnconfiguredProviders();
+      const configured = getConfiguredProviderIdsFromSettings();
+      const configuredSet = new Set(configured);
+      const available = PROVIDERS.filter((provider) => !configuredSet.has(provider.id)).map((provider) => ({
+        id: provider.id,
+        name: provider.name,
+        apiKeyEnv: provider.apiKeyEnv,
+      }));
       if (!configured.length && available.length > 0) {
         setTimeout(() => {
           vscode.window
             .showInformationMessage(
-              `🌟 发现 ${available.length} 个 AI Provider 可配置（如 ${available[0].name}）。设 ${available[0].apiKeyEnv} 环境变量即可激活。`,
-              "配置 Provider",
-              "稍后",
-            )
-            .then((sel) => {
-              if (sel === "配置 Provider") vscode.commands.executeCommand("hex4code.configureProviders");
-            });
+              `发现 ${available.length} 个 AI Provider 可配置（如 ${available[0].name}）。请在 settings.json 中设置 ${available[0].apiKeyEnv} 或环境变量即可激活。`,
+            );
         }, 5000);
       }
     } catch {

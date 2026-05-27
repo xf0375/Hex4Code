@@ -46,8 +46,8 @@ import { buildExitSummaryText } from "./exitSummary";
 import { createClient } from "@hex4code/core/models/provider-client";
 import { PROVIDERS } from "@hex4code/core/models/provider-registry";
 import {
-  routeTask,
   detectConfiguredProviders,
+  resolveProviderRoute,
 } from "@hex4code/core/models/model-router";
 
 const DEFAULT_MODEL = "deepseek-v4-pro";
@@ -2118,18 +2118,18 @@ export function createOpenAIClient(projectRoot: string = process.cwd()): {
   const settings = resolveCurrentSettings(projectRoot);
 
   // 使用多模型路由引擎选择聊天模型
-  const configuredProviders = detectConfiguredProviders(process.env);
-  // Read taskModels from raw settings (not in ResolvedHex4codeSettings)
-  const rawSettings = readSettings();
-  const taskModels = (rawSettings as any)?.taskModels || undefined;
-  const route = routeTask("chat", {
-    explicitModel: settings.model,
-    routing: taskModels,
-    configuredProviders,
+  const route = resolveProviderRoute("chat", {
+    model: settings.model,
+    routing: settings.taskModels,
+    env: { ...settings.env, API_KEY: settings.apiKey ?? settings.env.API_KEY },
+    providers: settings.providers,
+    legacyApiKeyProvider: settings.legacyApiKeyProvider,
+    legacyBaseURLProvider: settings.legacyBaseURLProvider,
+    processEnv: process.env,
   });
   const routedModel = route.modelId;
   const routedBaseURL = route.baseURL;
-  const routedApiKey = settings.apiKey || process.env[route.apiKeyEnv] || "";
+  const routedApiKey = route.apiKey;
 
   if (!routedApiKey) {
     return {

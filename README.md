@@ -226,6 +226,70 @@ npx vsce package --baseImagesUrl=https://atomgit.com/zzwgbdt/Hex4Code
 
 ## 配置说明
 
+> 推荐优先使用 VS Code 侧边栏里的模型下拉和齿轮按钮完成配置。下面是当前推荐的 JSON 配置格式；旧版 `env.API_KEY` 写法仍兼容，但不推荐用于多 Provider 切换。
+
+### 推荐配置格式
+
+```json
+{
+  "providers": {
+    "deepseek": {
+      "apiKey": "sk-...",
+      "baseURL": "https://api.deepseek.com"
+    },
+    "openai": {
+      "apiKey": "sk-...",
+      "baseURL": "https://api.openai.com/v1"
+    }
+  },
+  "model": "deepseek-v4-flash",
+  "thinkingEnabled": true,
+  "reasoningEffort": "max"
+}
+```
+
+每个 Provider 拥有自己的 API Key。切换模型时，Hex4Code 会按模型所属 Provider 读取对应 Key，不会把 DeepSeek 的 Key 发送给 OpenAI，反之亦然。
+
+### 配置优先级
+
+项目级配置会覆盖用户级配置：
+
+```text
+环境变量 HEX4CODE_*
+> 项目级 ./.hex4code/settings.json
+> 用户级 ~/.hex4code/settings.json
+> 默认值
+```
+
+例如，用户级配置选择 `deepseek-v4-flash`，但项目级配置选择 `deepseek-v4-pro`，则当前项目会使用 `deepseek-v4-pro`。
+
+### API Key 解析顺序
+
+内置 Provider 的 API Key 按以下顺序解析：
+
+```text
+providers.<provider>.apiKey
+> env.<PROVIDER_API_KEY>
+> 系统环境变量 <PROVIDER_API_KEY>
+> legacy API_KEY（仅在归属明确时使用）
+```
+
+如果必须继续使用旧版通用 `API_KEY` / `BASE_URL`，建议显式声明归属：
+
+```json
+{
+  "env": {
+    "API_KEY": "sk-...",
+    "BASE_URL": "https://api.deepseek.com"
+  },
+  "legacyApiKeyProvider": "deepseek",
+  "legacyBaseURLProvider": "deepseek",
+  "model": "deepseek-v4-flash"
+}
+```
+
+Provider 专用环境变量也可使用，例如 `DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`QWEN_API_KEY`、`GEMINI_API_KEY`。
+
 ### 配置文件位置
 
 Hex4Code 支持三层配置级联（优先级从低到高）：
