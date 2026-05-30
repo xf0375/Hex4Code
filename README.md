@@ -13,7 +13,7 @@
 
 ## 🎉 1,000 Downloads on AtomGit!
 
-Hex4Code has reached **1,000 downloads** on China's [AtomGit (开放原子)](https://atomgit.com/zzwgbdt/Hex4Code) open-source platform!
+Hex4Code has reached **1,000 downloads** on China's [AtomGit](https://atomgit.com/zzwgbdt/Hex4Code) open-source platform!
 
 Thank you to everyone who downloaded, tested, and shared the project. Your support keeps us building. Here's to the next milestone!
 
