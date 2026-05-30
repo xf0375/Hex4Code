@@ -10,6 +10,15 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="node" />
 </p>
 
+
+## 🎉 1,000 Downloads on AtomGit!
+
+Hex4Code has reached **1,000 downloads** on China's [AtomGit (开放原子)](https://atomgit.com/zzwgbdt/Hex4Code) open-source platform!
+
+Thank you to everyone who downloaded, tested, and shared the project. Your support keeps us building. Here's to the next milestone!
+
+⭐ Star the repo · 🐛 Report issues · 🤝 Contributions welcome.
+
 ---
 
 ## About the Company
