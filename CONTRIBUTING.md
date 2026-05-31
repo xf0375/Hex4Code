@@ -10,7 +10,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](./
 
 ### Report Bugs
 
-1. Go to the [Issues page](https://atomgit.com/zzwgbdt/Hex4Code/issues)
+1. Go to the [Issues page](https://github.com/ZZWGBDT/Hex4Code/issues)
 2. Search for existing issues first
 3. If none exists, create a new Issue with the following information:
    - **Environment**: OS, Node.js version, Hex4Code version
@@ -31,7 +31,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](./
 
 ```bash
 # 1. Fork and clone the repository
-git clone https://atomgit.com/zzwgbdt/Hex4Code.git
+git clone https://github.com/ZZWGBDT/Hex4Code.git
 cd Hex4Code
 
 # 2. Install dependencies
@@ -143,5 +143,5 @@ For detailed architecture, refer to [docs/architecture.md](./docs/architecture.m
 
 ## Questions & Help
 
-- **Issues**: [https://atomgit.com/zzwgbdt/Hex4Code/issues](https://atomgit.com/zzwgbdt/Hex4Code/issues)
-- **Discussions**: [https://atomgit.com/zzwgbdt/Hex4Code/discussions](https://atomgit.com/zzwgbdt/Hex4Code/discussions)
+- **Issues**: [https://github.com/ZZWGBDT/Hex4Code/issues](https://github.com/ZZWGBDT/Hex4Code/issues)
+- **Discussions**: [https://github.com/ZZWGBDT/Hex4Code/discussions](https://github.com/ZZWGBDT/Hex4Code/discussions)
