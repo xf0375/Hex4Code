@@ -41,7 +41,7 @@ Hex4Code supports agent skills, allowing you to extend the assistant's capabilit
 
 ## Screenshot
 
-![screenshot](https://atomgit.com/zzwgbdt/Hex4Code/raw/master/vscode/resources/hex4code_screenshot.png)
+![screenshot](https://github.com/ZZWGBDT/Hex4Code/raw/master/vscode/resources/hex4code_screenshot.png)
 
 ## Hex4Code CLI
 
@@ -51,13 +51,13 @@ npm install -g @hex4code/cli
 
 > The VS Code extension and CLI share configuration files and data, but are runtime-independent.
 
-- AtomGit: https://atomgit.com/zzwgbdt/Hex4Code
+- GitHub: https://github.com/ZZWGBDT/Hex4Code
 
 ## FAQ
 
 ### How do I move Hex4Code from the left sidebar to the right sidebar (Secondary Side Bar)?
 
-![faq1](https://atomgit.com/zzwgbdt/Hex4Code/raw/master/vscode/resources/faq1.gif)
+![faq1](https://github.com/ZZWGBDT/Hex4Code/raw/master/vscode/resources/faq1.gif)
 
 ### Does Hex4Code support image understanding?
 
@@ -84,12 +84,12 @@ Yes. Just configure `env.BASE_URL` in `~/.hex4code/settings.json` to an OpenAI-c
 
 ## Get Help
 
-- Report bugs or request features on AtomGit Issues (https://atomgit.com/zzwgbdt/Hex4Code/issues)
+- Report bugs or request features on GitHub Issues (https://github.com/ZZWGBDT/Hex4Code/issues)
 
 ## Support Us
 
 If you find this extension helpful, please consider supporting us by:
 
-- Giving us a Star on AtomGit (https://atomgit.com/zzwgbdt/Hex4Code)
+- Giving us a Star on GitHub (https://github.com/ZZWGBDT/Hex4Code)
 - Submitting feedback and suggestions
 - Sharing with your friends and colleagues

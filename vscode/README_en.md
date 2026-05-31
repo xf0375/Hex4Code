@@ -52,7 +52,7 @@ npm install -g @hex4code/cli
 
 > The VSCode plugin and CLI share configuration and data, but they have no dependencies at runtime.
 
-- AtomGit： https://atomgit.com/zzwgbdt/Hex4Code
+- GitHub： https://github.com/ZZWGBDT/Hex4Code
 
 ## FAQ
 
@@ -85,4 +85,4 @@ Yes. Just set `env.BASE_URL` in `~/.hex4code/settings.json` to an OpenAI-compati
 
 ## Getting Help
 
-- Report bugs or request features on AtomGit Issues (https://atomgit.com/zzwgbdt/Hex4Code/issues)
+- Report bugs or request features on GitHub Issues (https://github.com/ZZWGBDT/Hex4Code/issues)

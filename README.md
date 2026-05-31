@@ -27,7 +27,7 @@ Thank you to everyone who downloaded, tested, and shared the project. Your suppo
 
 Hex4Code is the company's open-source AI programming assistant project, built around a built-in pipeline engine (Build → Test → Index → Version Control), providing developers with a full-scenario intelligent coding experience from terminal CLI to VS Code extension.
 
-- **Source Repository**: [https://atomgit.com/zzwgbdt/Hex4Code](https://atomgit.com/zzwgbdt/Hex4Code)
+- **Source Repository**: [https://github.com/ZZWGBDT/Hex4Code](https://github.com/ZZWGBDT/Hex4Code)
 - **Copyright**: Copyright © 2026 Zhengzhou Weiguang Semiconductor Co., Ltd.
 
 ---
@@ -100,7 +100,7 @@ hex4_code_v1.1/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://atomgit.com/zzwgbdt/Hex4Code.git
+git clone https://github.com/ZZWGBDT/Hex4Code.git
 cd Hex4Code
 ```
 
@@ -177,7 +177,7 @@ npm run build:vscode
 
 # Package as .vsix
 cd vscode
-npx vsce package --baseImagesUrl=https://atomgit.com/zzwgbdt/Hex4Code
+npx vsce package --baseImagesUrl=https://github.com/ZZWGBDT/Hex4Code
 # Output: vscode/hex4code-vscode-<version>.vsix
 ```
 
@@ -434,8 +434,8 @@ We welcome community contributions! Please read [CONTRIBUTING.md](./CONTRIBUTING
 
 ## Community & Support
 
-- **Source Code**: [https://atomgit.com/zzwgbdt/Hex4Code](https://atomgit.com/zzwgbdt/Hex4Code)
-- **Bug Reports**: Submit via [AtomGit Issues](https://atomgit.com/zzwgbdt/Hex4Code/issues)
-- **Discussions**: Join via [AtomGit Discussions](https://atomgit.com/zzwgbdt/Hex4Code/discussions)
+- **Source Code**: [https://github.com/ZZWGBDT/Hex4Code](https://github.com/ZZWGBDT/Hex4Code)
+- **Bug Reports**: Submit via [GitHub Issues](https://github.com/ZZWGBDT/Hex4Code/issues)
+- **Discussions**: Join via [GitHub Discussions](https://github.com/ZZWGBDT/Hex4Code/discussions)
 
 ---
