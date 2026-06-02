@@ -10,6 +10,12 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="node" />
 </p>
 
+<br>
+
+> <p align="center"><strong><em>用我们的确定性，对抗世界的熵增；<br>用我们的协作，定义未来的形状。</em></strong></p>
+> <p align="center"><strong><em>With our certainty, we counter the world's entropy.<br>With our collaboration, we define the shape of the future.</em></strong></p>
+
+<br>
 
 ## 🎉 1,000 Downloads on AtomGit!
 
